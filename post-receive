@@ -14,6 +14,7 @@ branch=$(basename $ref)
 #branch=$(basename $1)
 
 cd ..
+root=`pwd`
 
 # GIT_DIR is "." which should points to bare repozitory
 GIT_DIR="`pwd`/$branch/.git"
@@ -34,6 +35,21 @@ else
   blue "Creating logs ..."
   mkdir log 2> /dev/null
   touch log/apache.log 2> /dev/null
+fi
+
+# vhosts
+vhost="$root/vhosts/$branch.vhost"
+if ! [ -f "$vhost" ] ; then
+  red "Creating vhost file in $vhost ..."
+  if [ -x "$vhostgen" ] ; then
+    $root/../tools/vhost-gen $root $branch > $vhost
+  else
+    vhost-gen.rb $root $branch.$(basename $root) > $vhost
+  fi
+  red "You should setup data sources. Possibilities are:"
+  red "  - symlink production database: just if db structure is same"
+  red "  - copy production database: just if db structure is same"
+  red "  - use fixtures: in another cases"
 fi
 
 # HOOKS
