@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /etc/profile
+
 # POST-RECEIVE HOOK
 # ARGV: empty
 # STDIN: [OLD HEAD] [NEW HEAD] refs/heads/alpha
@@ -48,7 +50,7 @@ vhost="$root/vhosts/$branch.vhost"
 vhostgen="$root/../support/tools/vhost-gen"
 if ! [ -f "$vhost" ] ; then
   red "Creating vhost file in $vhost ..."
-  mkdir $(dirname $vhost)
+  mkdir $(dirname $vhost) 2> /dev/null
   if [ -x "$vhostgen" ] ; then
     $vhostgen $root $branch > $vhost
   else
