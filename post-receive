@@ -31,6 +31,9 @@ else
   git clone repo.git $branch
   cd $branch
   git checkout $branch
+  blue "Creating logs ..."
+  mkdir log 2> /dev/null
+  touch log/apache.log 2> /dev/null
 fi
 
 # HOOKS
