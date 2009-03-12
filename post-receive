@@ -41,17 +41,6 @@ else
     blue "Runnings global clone hook"
     ../support/hooks/clone
   fi
-# TODO: move into hook
-  if [ "$branch" = "master" ] && [ $(dirname $root/..) != "static" ] ; then
-    echo "Linking production database to the $BACKUPDIR ..."
-    touch "production.db"
-    ln -s "$(pwd)/production.db" "$BACKUPDIR/backups"
-    # TODO: how to solve problem with various locations of uploads
-    # dir? Django vs. Merb, public/uploads vs. public/images etc
-    if [ -d "public/uploads" ] ; then
-      ln -s "$(pwd)/uploads" "$BACKUPDIR/uploads"
-    fi
-  fi
 fi
 
 # vhosts
