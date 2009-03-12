@@ -23,6 +23,7 @@ GIT_DIR="`pwd`/$branch/.git"
 
 # colors
 red()  { echo -e "\e[1;31m$*\e[0m"; }
+green() { echo -e "\e[1;32m$*\e[0m"; }
 blue() { echo -e "\e[1;34m$*\e[0m"; }
 
 if [ -d "$branch" ] ; then
@@ -49,17 +50,17 @@ fi
 vhost="$root/vhosts/$branch.vhost"
 vhostgen="$root/../support/tools/vhost-gen"
 if ! [ -f "$vhost" ] ; then
-  red "Creating vhost file in $vhost ..."
+  green "Creating vhost file in $vhost ..."
   mkdir $(dirname $vhost) 2> /dev/null
   if [ -x "$vhostgen" ] ; then
     $vhostgen $root $branch > $vhost
   else
     vhost-gen.rb $root $branch.$(basename $root) > $vhost
   fi
-  red "You should setup data sources. Possibilities are:"
-  red "  - symlink production database: just if db structure is same"
-  red "  - copy production database: just if db structure is same"
-  red "  - use fixtures: in another cases"
+  green "You should setup data sources. Possibilities are:"
+  green "  - symlink production database: just if db structure is same"
+  green "  - copy production database: just if db structure is same"
+  green "  - use fixtures: in another cases"
 fi
 
 # HOOKS
