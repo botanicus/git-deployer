@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# POST-RECEIVE HOOK
+# ARGV: empty
+# STDIN: [OLD HEAD] [NEW HEAD] refs/heads/alpha
+set -- $(cat /dev/stdin)
+
+old=$1 && new=$2 && ref=$3
+branch=$(basename $ref)
+
+# POST-UPDATE HOOK
+# ARGV: $1 is branch
+# STDIN: ?
+#branch=$(basename $1)
+
+cd ..
+
+# GIT_DIR is "." which should points to bare repozitory
+GIT_DIR="`pwd`/$branch/.git"
+
+# colors
+red()  { echo -e "\e[1;31m$*\e[0m"; }
+blue() { echo -e "\e[1;34m$*\e[0m"; }
+
+if [ -d "$branch" ] ; then
+  cd $branch
+  blue "Updating $branch in `pwd` ... (from $old' to '$new')"
+  git pull
+else
+  blue "Cloning $branch to $(pwd)/$branch (HEAD: '$new') ..."
+  git clone repo.git $branch
+  cd $branch
+  git checkout $branch # this fails
+  # fatal: Not a git repository: '.'
+  # error: hooks/post-receive exited with error code 128
+fi
+
+# HOOKS
+# Run first found hook
+
+# local hooks
+if [ -x "hooks/update" ] ; then
+  blue "Runnings project's update hook"
+  exec hooks/update
+fi
+
+# global hooks
+# /webs/static/hooks/update
+if [ -x "../hooks/update" ] ; then
+  blue "Runnings global update hook"
+  exec ../hooks/update
+fi
