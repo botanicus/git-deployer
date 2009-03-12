@@ -30,9 +30,7 @@ else
   blue "Cloning $branch to $(pwd)/$branch (HEAD: '$new') ..."
   git clone repo.git $branch
   cd $branch
-  git checkout $branch # this fails
-  # fatal: Not a git repository: '.'
-  # error: hooks/post-receive exited with error code 128
+  git checkout $branch
 fi
 
 # HOOKS
