@@ -35,14 +35,33 @@ else
   blue "Creating logs ..."
   mkdir log 2> /dev/null
   touch log/apache.log 2> /dev/null
+  # global hooks
+  # /webs/static/hooks/update
+  if [ -x "../support/hooks/clone" ] ; then
+    blue "Runnings global clone hook"
+    ../support/hooks/clone
+  fi
+# TODO: move into hook
+  if [ "$branch" = "master" ] && [ $(dirname $root/..) != "static" ] ; then
+    echo "Linking production database to the $BACKUPDIR ..."
+    touch "production.db"
+    ln -s "$(pwd)/production.db" "$BACKUPDIR/backups"
+    # TODO: how to solve problem with various locations of uploads
+    # dir? Django vs. Merb, public/uploads vs. public/images etc
+    if [ -d "public/uploads" ] ; then
+      ln -s "$(pwd)/uploads" "$BACKUPDIR/uploads"
+    fi
+  fi
 fi
 
 # vhosts
 vhost="$root/vhosts/$branch.vhost"
+vhostgen="$root/../support/tools/vhost-gen"
 if ! [ -f "$vhost" ] ; then
   red "Creating vhost file in $vhost ..."
+  mkdir $(dirname $vhost)
   if [ -x "$vhostgen" ] ; then
-    $root/../tools/vhost-gen $root $branch > $vhost
+    $vhostgen $root $branch > $vhost
   else
     vhost-gen.rb $root $branch.$(basename $root) > $vhost
   fi
@@ -56,14 +75,14 @@ fi
 # Run first found hook
 
 # local hooks
-if [ -x "hooks/update" ] ; then
+if [ -x "support/hooks/update" ] ; then
   blue "Runnings project's update hook"
-  exec hooks/update
+  exec support/hooks/update
 fi
 
 # global hooks
 # /webs/static/hooks/update
-if [ -x "../hooks/update" ] ; then
+if [ -x "../support/hooks/update" ] ; then
   blue "Runnings global update hook"
-  exec ../hooks/update
+  exec ../support/hooks/update
 fi
