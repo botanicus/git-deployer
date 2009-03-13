@@ -40,9 +40,9 @@ else
   touch log/apache.log 2> /dev/null
   # global hooks
   # /webs/static/hooks/update
-  if [ -x "../support/hooks/clone" ] ; then
+  if [ -x "$root/../support/hooks/clone" ] ; then
     blue "Runnings global clone hook"
-    ../support/hooks/clone
+    $root/../support/hooks/clone
   fi
 fi
 
