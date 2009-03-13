@@ -55,8 +55,12 @@ if ! [ -f "$vhost" ] ; then
   if [ -x "$vhostgen" ] ; then
     $vhostgen $root $branch > $vhost
   else
-    vhost-gen.rb $root $branch.$(basename $root) > $vhost
+    vhost-gen.rb $root $branch > $vhost
   fi
+  #httpd -k restart
+  # TODO: how to restart apache as user?
+  green "Restart Apache please"
+  echo
   green "You should setup data sources. Possibilities are:"
   green "  - symlink production database: just if db structure is same"
   green "  - copy production database: just if db structure is same"
