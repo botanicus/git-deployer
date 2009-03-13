@@ -22,9 +22,9 @@ root=`pwd`
 GIT_DIR="`pwd`/$branch/.git"
 
 # colors
-red()  { echo -e "\e[1;31m$*\e[0m"; }
+red()   { echo -e "\e[1;31m$*\e[0m"; }
 green() { echo -e "\e[1;32m$*\e[0m"; }
-blue() { echo -e "\e[1;34m$*\e[0m"; }
+blue()  { echo -e "\e[1;34m$*\e[0m"; }
 
 if [ -d "$branch" ] ; then
   cd $branch
