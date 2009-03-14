@@ -29,6 +29,7 @@ blue()  { echo -e "\e[1;34m$*\e[0m"; }
 if [ -d "$branch" ] ; then
   cd $branch
   blue "Updating $branch in `pwd` ... (from $old' to '$new')"
+  git reset --hard
   git pull
 else
   blue "Cloning $branch to $(pwd)/$branch (HEAD: '$new') ..."
