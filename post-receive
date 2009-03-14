@@ -37,8 +37,8 @@ else
   cd $branch
   git checkout $branch
   blue "Creating logs ..."
+  # tmp for tmp/restart.txt
   mkdir log tmp 2> /dev/null
-  touch log/apache.log tmp/restart.txt
   # global hooks
   # /webs/static/hooks/update
   if [ -x "$root/../support/hooks/clone" ] ; then
@@ -58,9 +58,8 @@ if ! [ -f "$vhost" ] ; then
   else
     vhost-gen.rb $root $branch > $vhost
   fi
-  #httpd -k restart
-  # TODO: how to restart apache as user?
-  green "Restart Apache please"
+  green "Restarting Apache ..."
+  httpd -k restart
   echo
   green "You should setup data sources. Possibilities are:"
   green "  - symlink production database: just if db structure is same"
