@@ -1,6 +1,5 @@
 #!/bin/bash
 
-source /etc/profile
 
 # POST-RECEIVE HOOK
 # ARGV: empty
@@ -25,6 +24,12 @@ GIT_DIR="`pwd`/$branch/.git"
 red()   { echo -e "\e[1;31m$*\e[0m"; }
 green() { echo -e "\e[1;32m$*\e[0m"; }
 blue()  { echo -e "\e[1;34m$*\e[0m"; }
+
+blue "Reading /etc/profile ..."
+source /etc/profile
+
+blue "Environment setup:"
+echo "\$PATH: $PATH"
 
 if [ -d "$branch" ] ; then
   cd $branch
