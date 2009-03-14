@@ -78,7 +78,7 @@ fi
 
 # global hooks
 # /webs/static/hooks/update
-if [ -x "../support/hooks/update" ] ; then
+if [ -x "../../support/hooks/update" ] ; then
   blue "Runnings global update hook"
-  exec ../support/hooks/update
+  exec ../../support/hooks/update
 fi
