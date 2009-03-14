@@ -36,8 +36,8 @@ else
   cd $branch
   git checkout $branch
   blue "Creating logs ..."
-  mkdir log 2> /dev/null
-  touch log/apache.log 2> /dev/null
+  mkdir log tmp 2> /dev/null
+  touch log/apache.log tmp/restart.txt
   # global hooks
   # /webs/static/hooks/update
   if [ -x "$root/../support/hooks/clone" ] ; then
