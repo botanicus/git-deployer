@@ -31,6 +31,7 @@ if [ -d "$branch" ] ; then
   blue "Updating $branch in `pwd` ... (from $old' to '$new')"
   git reset --hard
   git pull
+  touch tmp/restart.txt
 else
   blue "Cloning $branch to $(pwd)/$branch (HEAD: '$new') ..."
   git clone repo.git $branch
@@ -82,3 +83,5 @@ if [ -x "../../support/hooks/update" ] ; then
   blue "Runnings global update hook"
   exec ../../support/hooks/update
 fi
+
+blue "Restarting application ..."
