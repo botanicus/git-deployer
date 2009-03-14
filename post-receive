@@ -61,11 +61,6 @@ if ! [ -f "$vhost" ] ; then
   fi
   green "Restarting Apache ..."
   httpd -k restart
-  echo
-  green "You should setup data sources. Possibilities are:"
-  green "  - symlink production database: just if db structure is same"
-  green "  - copy production database: just if db structure is same"
-  green "  - use fixtures: in another cases"
 fi
 
 # HOOKS
