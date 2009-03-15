@@ -1,0 +1,38 @@
+#!/bin/bash
+
+if [ "$BACKUPDIR" = "" ] ; then
+  echo "BACKUPDIR environment variable must be set"
+  exit 1
+fi
+
+if [ "$1" = "" ] ; then
+  echo "First argument must be branch name"
+  exit 1
+fi
+
+if [ "$2" = "" ] ; then
+  echo "Second argument must be project root. Example: /webs/apps/merb/botablog.cz"
+  exit 1
+fi
+
+if ! [ -d "$2" ] ; then
+  echo "Second argument must be existing directory. Example: /webs/apps/merb/botablog.cz"
+  exit 1
+fi
+
+branch=$1
+project=$2
+root=$(dirname $2)
+
+echo "branch: $branch"
+echo "root: $root"
+echo "project: $project"
+
+if [ "$branch" = "master" ] ; then
+  echo "Linking production database to the '$BACKUPDIR' ..."
+  touch "$project/$branch/production.db"
+  ln -sf "$project/$branch/production.db" "$BACKUPDIR/backups"
+  if [ -d "$project/$branch/public/uploads" ] ; then
+    ln -sf "$project/$branch/public/uploads" "$BACKUPDIR/uploads"
+  fi
+fi

@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby1.8
+
+require "find"
+require "rubygems"
+require "term/ansicolor"
+
+String.send(:include, Term::ANSIColor)
+
+branch  = File.basename(Dir.pwd)
+project = Regexp::quote(File.basename(File.dirname(Dir.pwd)))
+python  = "python2.6"
+
+puts "Replacing #{project} with #{branch} ...".blue.bold
+Find.find(".") do |file|
+  next unless file.match(/\.py$/)
+  original = File.readlines(file)
+  File.open(file, "w") do |stream|
+    original.each do |line|
+      # from dytrych.foo import bar => from master.foo import bar
+      line.gsub!(/(['"])#{project}\./) do
+        puts "~ #{file.yellow}: #{line}"
+        "#$1#{branch}."
+      end
+      # include('dytrych.foo.urls') => include('master.foo.urls')
+      line.gsub!(/(from|import)\s+#{project}/) do
+        puts "~ #{file.yellow}: #{line}"
+        "\\1 #{branch}"
+      end
+      stream.puts(line)
+    end
+  end
+end
+
+if File.exist?("production.db")
+  puts "Note: maybe db will need to be deleted and recreated, if you have changed some model's structure.".red.bold
+elsif File.exist?("development.db")
+  puts "Running syncdb ...".blue.bold
+  system("rm development.db")
+  system("#{python} manage.py syncdb --noinput")
+end
+
+puts "Loading fixtures ...".blue.bold
+system("#{python} manage.py loaddata fixtures.json")
