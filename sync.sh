@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 cd hooks
 for hook in **/*(.) ; do
