@@ -1,0 +1,55 @@
+h1. Post receive hook
+
+- reads /etc/profile
+This hook runs after git push on your remote server. It supposed there is project/repo. When you first run push on this repo, the code is cloned into project/[branch] is created, and here some necessary files and directories are created. Then vhost file in projectdir/vhost/[branch].vhost is generated (it needs vhost-gen from server-tools or your own hook
+After the whole hook run application is restarted by touch tmp/restart.txt (which is Phussion Passenger way how to restart an application).
+
+h1. Dependencies
+
+- Git (of course)
+- Apache
+- Phusion Passenger (I'm using it for running Rails, Merb & Django, but it will be easy to work without it)
+- http://github.com/botanicus/server-tools
+
+h1. File hierarchy
+
+<pre>
+project_type/project/repo.git
+project_type/project/vhosts/[branch].vhost
+project_type/project/[branch]
+project_type/support/hooks/clone
+project_type/support/hooks/update
+project_type/support/tools/vhost-gen
+</pre>
+
+h1. Hooks
+
+h2. Clone hook
+
+This hook is run when project sources aren't cloned to [branch] directory yet. It creates log for apache logs and tmp for tmp/restart.txt.
+
+h2. Update hook
+
+Firstly, changed files are reset to avoid problems during rebase. Then rebase is run and last step is update hook. You can have local hook in support/hooks/update in your app or global hook in project/../support/hooks/update. Just first found is executed.
+
+The hook runs after each sources update, even after first clone. It is great place to run your migrations, loading fixtures etc.
+system vs. app update hook (just first)
+
+h2. Vhost generation
+
+If vhost for current branch doesn't exist, it is created. After vhost generation Apache is restarted.
+
+h1. Server.thor
+
+This file contains most common server tasks, restarting apache, running project.sh, http-probe.rb etc.
+
+<pre>
+# install them globally
+thor install server.thor --as=server
+
+# see all the tasks
+thor -T server
+
+# run thor task
+thor server:project --help
+</pre>
