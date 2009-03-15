@@ -35,8 +35,8 @@ if [ -d "$branch" ] ; then
   cd $branch
   blue "Updating $branch in `pwd` ... (from $old' to '$new')"
   git reset --hard
+  # TODO: rebase will be better
   git pull
-  touch tmp/restart.txt
 else
   blue "Cloning $branch to $(pwd)/$branch (HEAD: '$new') ..."
   git clone repo.git $branch
@@ -71,17 +71,14 @@ fi
 # HOOKS
 # Run first found hook
 
-# local hooks
+# hooks: run local, if doesn't exist, run global
 if [ -x "support/hooks/update" ] ; then
   blue "Runnings project's update hook"
-  exec support/hooks/update
-fi
-
-# global hooks
-# /webs/static/hooks/update
-if [ -x "../../support/hooks/update" ] ; then
+  support/hooks/update
+elif [ -x "../../support/hooks/update" ] ; then
   blue "Runnings global update hook"
-  exec ../../support/hooks/update
+  ../../support/hooks/update
 fi
 
 blue "Restarting application ..."
+touch tmp/restart.txt
