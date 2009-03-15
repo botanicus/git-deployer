@@ -47,23 +47,18 @@ else
   mkdir log tmp 2> /dev/null
   # global hooks
   # /webs/static/hooks/update
-  if [ -x "$root/../support/hooks/clone" ] ; then
+  if [ -x "$root/../hooks/clone" ] ; then
     blue "Runnings global clone hook"
-    $root/../support/hooks/clone
+    $root/../hooks/clone
   fi
 fi
 
 # vhosts
 vhost="$root/vhosts/$branch.vhost"
-vhostgen="$root/../support/tools/vhost-gen"
 if ! [ -f "$vhost" ] ; then
   green "Creating vhost file in $vhost ..."
   mkdir $(dirname $vhost) 2> /dev/null
-  if [ -x "$vhostgen" ] ; then
-    $vhostgen $root $branch > $vhost
-  else
-    vhost-gen.rb $root $branch > $vhost
-  fi
+  vhost-gen.rb $root $branch > $vhost
   green "Restarting Apache ..."
   httpd -k restart
 fi
@@ -72,12 +67,12 @@ fi
 # Run first found hook
 
 # hooks: run local, if doesn't exist, run global
-if [ -x "support/hooks/update" ] ; then
+if [ -x "hooks/update" ] ; then
   blue "Runnings project's update hook"
-  support/hooks/update
-elif [ -x "../../support/hooks/update" ] ; then
+  hooks/update
+elif [ -x "../../hooks/update" ] ; then
   blue "Runnings global update hook"
-  ../../support/hooks/update
+  ../../hooks/update
 fi
 
 blue "Restarting application ..."
