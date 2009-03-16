@@ -67,10 +67,10 @@ file.close
 system("chmod +x '#{file.path}'")
 
 if @env == "production"
-  puts "Symlinking database into #{ENV['BACKUPDIR']}/database/#@project.db ...".blue.bold
-  system("ln -s #{Dir.pwd}/production.db #{ENV['BACKUPDIR']}/database/#@project.db")
+  puts "Symlinking database into #{ENV['BACKUPDIR']}/database/#{File.basename(@project)}.db ...".blue.bold
+  system("ln -s #{Dir.pwd}/production.db #{ENV['BACKUPDIR']}/database/#{File.basename(@project)}.db")
   if File.directory?("media/uploads")
-    puts "Symlinking uploads into #{ENV['BACKUPDIR']}/uploads/#@project ...".blue.bold
-    system("ln -s #{Dir.pwd}/media/uploads/ #{ENV['BACKUPDIR']}/uploads/#@project")
+    puts "Symlinking uploads into #{ENV['BACKUPDIR']}/uploads/#{File.basename(@project)} ...".blue.bold
+    system("ln -s #{Dir.pwd}/media/uploads/ #{ENV['BACKUPDIR']}/uploads/#{File.basename(@project)}")
   end
 end
