@@ -75,5 +75,8 @@ elif [ -x "../../hooks/update" ] ; then
   ../../hooks/update
 fi
 
-blue "Restarting application ..."
-touch tmp/restart.txt
+# NOTE: it may be in webs
+if [ -d "tmp" ] ; then
+  blue "Restarting application ..."
+  touch tmp/restart.txt
+fi

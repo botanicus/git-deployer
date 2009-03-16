@@ -26,7 +26,6 @@ Dir.chdir("web")
 
 puts "Local settings ...".blue.bold
 File.open("settings_local.py", "w") do |file|
-  content = File.read("settings_local_sample.py")
   if @env == "production"
   file.puts <<EOF
 DEBUG = False
@@ -77,3 +76,6 @@ if @env == "production"
     system("ln -s #{Dir.pwd}/media/uploads/ #{ENV['BACKUPDIR']}/uploads/#@project")
   end
 end
+
+puts "Restarting Apache ...".blue.bold
+system("httpd -k restart")
