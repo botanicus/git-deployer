@@ -14,6 +14,7 @@ String.send(:include, Term::ANSIColor)
 
 python = "python2.6"
 
+system("mkdir media")
 puts "Linking Django admin media directory ...".blue.bold
 # TODO: more configurable (django-admin.py --version or so)
 system("ln -sf /opt/support/lib/#{python}/site-packages/Django-1.0.2_final-py2.6.egg/django/contrib/admin/media/ #{Dir.pwd}/media/admin-media")
