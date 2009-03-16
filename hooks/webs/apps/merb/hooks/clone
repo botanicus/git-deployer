@@ -15,7 +15,6 @@ ruby = "ruby1.8"
 
 puts "config/database.yml ...".blue.bold
 File.open("config/database.yml", "w") do |file|
-  content = File.read("settings_local_sample.py")
   if @env == "production"
   file.puts <<EOF
 ---
@@ -33,6 +32,7 @@ EOF
   end
 end
 
+# TODO: what if config.ru already exist?
 puts "Writing config.ru ...".blue.bold
 file = File.open("config.ru", "w")
 
