@@ -6,24 +6,23 @@ require "term/ansicolor"
 String.send(:include, Term::ANSIColor)
 
 @branch = File.basename(Dir.pwd)
-@path = Dir.pwd
 @project = File.dirname(Dir.pwd)
 
 # dytrych vs. botablog.cz
 @env = @project.match(/\./) && @branch.eql?("master") ? "production" : "development"
 
 python = "python2.6"
-
-system("mkdir media")
-system("mv tmp web")
-puts "Linking Django admin media directory ...".blue.bold
-# TODO: more configurable (django-admin.py --version or so)
-puts("ln -sf /opt/support/lib/#{python}/site-packages/Django-1.0.2_final-py2.6.egg/django/contrib/admin/media/ #{Dir.pwd}/media/admin-media")
-system("ln -sf /opt/support/lib/#{python}/site-packages/Django-1.0.2_final-py2.6.egg/django/contrib/admin/media/ #{Dir.pwd}/media/admin-media")
-
 system("vhost-gen.rb #@project #@branch --django > ../vhosts/#@branch.vhost")
 
+system("mkdir media")
+system("mv tmp log web")
+
 Dir.chdir("web")
+@path = Dir.pwd
+
+puts "Linking Django admin media directory ...".blue.bold
+# TODO: more configurable (django-admin.py --version or so)
+system("ln -sf /opt/support/lib/#{python}/site-packages/Django-1.0.2_final-py2.6.egg/django/contrib/admin/media/ #{Dir.pwd}/media/admin-media")
 
 puts "Local settings ...".blue.bold
 File.open("settings_local.py", "w") do |file|
@@ -52,9 +51,9 @@ file.puts <<EOF
 
 import os, sys
 # TODO: I'm not sure why is it so
-sys.path.append('#{File.basename(@path)}')
+sys.path.append('#{File.dirname(@path)}')
 sys.path.append('#@path')
-os.environ['DJANGO_SETTINGS_MODULE'] = '#@branch.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = '#{File.basename(File.dirname(@path))}.settings'
 
 import django.core.handlers.wsgi
 
