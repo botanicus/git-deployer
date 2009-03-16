@@ -66,11 +66,6 @@ EOF
 file.close
 system("chmod +x '#{file.path}'")
 
-# superuser etc should be in fixtures,
-# so we do not need to setup it here
-puts "Running syncdb ...".blue.bold
-system("#{python} manage.py syncdb --noinput")
-
 if @env == "production"
   puts "Symlinking database into #{ENV['BACKUPDIR']}/database/#@project.db ...".blue.bold
   system("ln -s #{Dir.pwd}/production.db #{ENV['BACKUPDIR']}/database/#@project.db")

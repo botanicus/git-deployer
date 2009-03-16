@@ -2,7 +2,7 @@
 
 PATH="bin:$PATH"
 
-run() { echo $* && shift && $* }
+run() { echo $* && $*; }
 
 run thor merb:gems:redeploy
 run rake db:autoupgrade db:migrate
