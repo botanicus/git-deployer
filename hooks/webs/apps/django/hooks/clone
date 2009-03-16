@@ -53,7 +53,7 @@ import os, sys
 # TODO: I'm not sure why is it so
 sys.path.append('#{File.dirname(@path)}')
 sys.path.append('#@path')
-os.environ['DJANGO_SETTINGS_MODULE'] = '#{File.basename(File.dirname(@path))}.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = '#{File.basename(Dir.pwd)}.settings'
 
 import django.core.handlers.wsgi
 
