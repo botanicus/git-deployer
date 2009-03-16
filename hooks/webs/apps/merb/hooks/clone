@@ -1,38 +1,81 @@
-#!/bin/bash
+#!/usr/bin/env ruby1.8
 
-if [ "$BACKUPDIR" = "" ] ; then
-  echo "BACKUPDIR environment variable must be set"
-  exit 1
-fi
+require "rubygems"
+require "term/ansicolor"
 
-if [ "$1" = "" ] ; then
-  echo "First argument must be branch name"
-  exit 1
-fi
+String.send(:include, Term::ANSIColor)
 
-if [ "$2" = "" ] ; then
-  echo "Second argument must be project root. Example: /webs/apps/merb/botablog.cz"
-  exit 1
-fi
+@branch = File.basename(Dir.pwd)
+@path = Dir.pwd
+@project = File.dirname(Dir.pwd)
+ruby = "ruby1.8"
 
-if ! [ -d "$2" ] ; then
-  echo "Second argument must be existing directory. Example: /webs/apps/merb/botablog.cz"
-  exit 1
-fi
+# dytrych vs. botablog.cz
+@env = @project.match(/\./) && @branch.eql?("master") ? "production" : "development"
 
-branch=$1
-project=$2
-root=$(dirname $2)
+puts "config/database.yml ...".blue.bold
+File.open("config/database.yml", "w") do |file|
+  content = File.read("settings_local_sample.py")
+  if @env == "production"
+  file.puts <<EOF
+---
+production: &defaults
+  adapter:  sqlite3
+  database: production.db
+EOF
+  elsif @env == "development"
+  file.puts <<EOF
+---
+development: &defaults
+  adapter:  sqlite3
+  database: development.db
+EOF
+  end
+end
 
-echo "branch: $branch"
-echo "root: $root"
-echo "project: $project"
+puts "Writing config.ru ...".blue.bold
+file = File.open("config.ru", "w")
 
-if [ "$branch" = "master" ] ; then
-  echo "Linking production database to the '$BACKUPDIR' ..."
-  touch "$project/$branch/production.db"
-  ln -sf "$project/$branch/production.db" "$BACKUPDIR/backups"
-  if [ -d "$project/$branch/public/uploads" ] ; then
-    ln -sf "$project/$branch/public/uploads" "$BACKUPDIR/uploads"
-  fi
-fi
+file.puts <<EOF
+#!/usr/bin/env #{ruby}
+
+ENV["MERB_ENV"] = "#@env"
+
+begin
+  require 'minigems'
+rescue LoadError
+  require 'rubygems'
+end
+ 
+if File.directory?(gems_dir = File.join(Dir.pwd, 'gems')) ||
+   File.directory?(gems_dir = File.join(File.dirname(__FILE__), '..', 'gems'))
+  $BUNDLE = true; Gem.clear_paths; Gem.path.unshift(gems_dir)
+end
+ 
+require 'merb-core'
+ 
+Merb::Config.setup(:merb_root => ".",
+                   :environment => ENV['RACK_ENV'])
+Merb.environment = Merb::Config[:environment]
+Merb.root = Merb::Config[:merb_root]
+Merb::BootLoader.run
+ 
+run Merb::Rack::Application.new
+EOF
+
+file.close
+system("chmod +x '#{file.path}'")
+
+# superuser etc should be in fixtures,
+# so we do not need to setup it here
+puts "Running syncdb ...".blue.bold
+system("#{python} manage.py syncdb --noinput")
+
+if @env == "production"
+  puts "Symlinking database into #{ENV['BACKUPDIR']}/database/#@project.db ...".blue.bold
+  system("ln -s #{Dir.pwd}/production.db #{ENV['BACKUPDIR']}/database/#@project.db")
+  if File.directory?("media/uploads")
+    puts "Symlinking uploads into #{ENV['BACKUPDIR']}/uploads/#@project ...".blue.bold
+    system("ln -s #{Dir.pwd}/media/uploads/ #{ENV['BACKUPDIR']}/uploads/#@project")
+  end
+end
