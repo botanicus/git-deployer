@@ -36,10 +36,13 @@ if File.exist?("production.db")
   puts "Note: maybe db will need to be deleted and recreated, if you have changed some model's structure.".red.bold
 else
   puts "Running syncdb ...".blue.bold
-  system("rm development.db")
+  system("rm development.db 2> /dev/null")
   system("#{python} manage.py syncdb --noinput")
   if File.exist?("fixtures.json")
     puts "Loading fixtures ...".blue.bold
     system("#{python} manage.py loaddata fixtures.json")
   end
 end
+
+puts "Restarting application ...".blue.bold
+system("touch tmp/restart.txt")
