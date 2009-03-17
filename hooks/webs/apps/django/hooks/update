@@ -38,9 +38,8 @@ elsif File.exist?("development.db")
   puts "Running syncdb ...".blue.bold
   system("rm development.db")
   system("#{python} manage.py syncdb --noinput")
-end
-
-if File.exist?("fixtures.json")
-  puts "Loading fixtures ...".blue.bold
-  system("#{python} manage.py loaddata fixtures.json")
+  if File.exist?("fixtures.json")
+    puts "Loading fixtures ...".blue.bold
+    system("#{python} manage.py loaddata fixtures.json")
+  end
 end
