@@ -34,7 +34,7 @@ Dir.chdir("web")
 
 if File.exist?("production.db")
   puts "Note: maybe db will need to be deleted and recreated, if you have changed some model's structure.".red.bold
-elsif File.exist?("development.db")
+else
   puts "Running syncdb ...".blue.bold
   system("rm development.db")
   system("#{python} manage.py syncdb --noinput")
