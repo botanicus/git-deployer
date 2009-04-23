@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env ruby1.9
 
-run() { echo $* && shift && $* }
+require "git-deploy/common"
+run "RAILS_ENV=#{config.env} rake db:migrate"
 
-export RAILS_ENV=""
-run rake db:migrate
+restart_application

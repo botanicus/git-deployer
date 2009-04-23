@@ -1,0 +1,12 @@
+:backupdir: /backups
+:apps: /webs/apps.yml
+:keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEArjReRBgEwbse+9Ltl6SeXiwhSQ6z0YnShMp7ijLMpPYmeIkNKaoApHjaenJ21zBB9yowGaFpxPN4nJSTMcf8Zoq945zqNP3HZeQEHdk9WzpaB8KVGmGRyeBLWHY3Td7CkYFNJ+bTH7/pXJjXutHDFTcFBuSie1coU8AW1fgjODH6vYgT6NcrIWpTJOq9TwwZke5219fCIb6x+7ENoREJy3Sx1ptVc2B+qovNhExQGL1u/IK8bmSIUEmEOHI+DfXFXZUi/vR9Htge6wmgu9BuSHpMjihBwQVteAFD5v9zAt7pcx0lUT9wgb8s/15eBKnXZNTHlsvLQPOEtMK2Y3Sg5Q==
+:hooks_root: ""
+:group: webservd
+:server: nginx
+:user: admin # obviously root
+
+# this will be merged with project-specific configuration in branch/deploy.yml
+:python: python2.6
+:ruby: ruby1.9

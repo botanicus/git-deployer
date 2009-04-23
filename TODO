@@ -1,0 +1,6 @@
+better logging
+log even if hook isn't runed
+[daeltar] compile expect; try another tcl
+http probe: set timeout after sending first email
+merge with git-hooks
+common functions: restart nginx/apache etc

@@ -1,9 +1,9 @@
-#!/usr/bin/env ruby1.8
+#!/usr/bin/env ruby1.9
 
-require "rubygems"
-require "term/ansicolor"
+require "git-deploy/common"
 
-String.send(:include, Term::ANSIColor)
+# tmp for tmp/restart.txt
+mkdir "tmp"
 
 @branch = File.basename(Dir.pwd)
 @project = File.dirname(Dir.pwd)
@@ -11,10 +11,9 @@ String.send(:include, Term::ANSIColor)
 # dytrych vs. botablog.cz
 @env = @project.match(/\./) && @branch.eql?("master") ? "production" : "development"
 
-python = "python2.6"
 system("vhost-gen.rb #@project #@branch --django > ../vhosts/#@branch.vhost")
 
-system("mkdir media")
+mkdir "media"
 system("mv tmp log web")
 
 Dir.chdir("web")
@@ -22,7 +21,7 @@ Dir.chdir("web")
 
 puts "Linking Django admin media directory ...".blue.bold
 # TODO: more configurable (django-admin.py --version or so)
-system("ln -sf /opt/support/lib/#{python}/site-packages/Django-1.0.2_final-py2.6.egg/django/contrib/admin/media/ #{Dir.pwd}/media/admin-media")
+system("ln -sf /opt/support/lib/#{config.python}/site-packages/Django-1.0.2_final-py2.6.egg/django/contrib/admin/media/ #{Dir.pwd}/media/admin-media")
 
 puts "Local settings ...".blue.bold
 File.open("settings_local.py", "w") do |file|
@@ -47,7 +46,7 @@ puts "Writing passenger_wsgi.py ...".blue.bold
 file = File.open("passenger_wsgi.py", "w")
 
 file.puts <<EOF
-#!/usr/bin/env #{python}
+#!/usr/bin/env #{config.python}
 
 import os, sys
 # TODO: I'm not sure why is it so
@@ -66,7 +65,7 @@ system("chmod +x '#{file.path}'")
 # superuser etc should be in fixtures,
 # so we do not need to setup it here
 puts "Running syncdb ...".blue.bold
-system("#{python} manage.py syncdb --noinput")
+python "manage.py syncdb --noinput"
 
 if @env == "production"
   puts "Symlinking database into #{ENV['BACKUPDIR']}/database/#{File.basename(@project)}.db ...".blue.bold

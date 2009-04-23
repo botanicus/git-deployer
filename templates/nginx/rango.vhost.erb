@@ -1,0 +1,75 @@
+# upstream [label]
+# label is used for proxy
+upstream <%= domain %> {
+  <% ports.each do |port %>
+  server localhost:<%= port %>;
+  <% end %>
+}
+
+# rewrite www.<%= domain %> to <%= domain %>
+server {
+  listen 80;
+  server_name  www.<%= domain %>;
+  rewrite ^/(.*) http://<%= domain %>/$1 permanent;
+}
+
+server {
+  listen 80;
+  server_name <%= domain %>;
+
+  # logs
+  error_log  <%= @project_root %>/log/error.log;
+  access_log <%= @project_root %>/log/access.log;
+
+  location / {
+    root <%= @project_root %>;
+    # this rewrites all the requests to the maintenance.html
+    # page if it exists in the doc root. This is for capistrano's
+    # disable web task
+    if (-f $document_root/maintenance.html) {
+      rewrite  ^(.*)$  /maintenance.html last;
+      break;
+    }
+
+    # cache
+    # this is the meat of the rails page caching config
+    # it adds .html to the end of the url and then checks
+    # the filesystem for that file. If it exists, then we
+    # rewite the url to have explicit .html on the end 
+    # and then send it on its way to the next config rule.
+    # if there is no file on the fs then it sets all the 
+    # necessary headers and proxies to our upstream mongrels
+    if (-f $request_filename.html) {
+      rewrite (.*) $1.html break;
+    }
+  
+    # proxy
+    # needed to forward user's IP address to app
+    proxy_set_header  X-Real-IP  $remote_addr;
+    # needed for HTTPS
+    proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $http_host;
+    proxy_redirect false;
+    proxy_max_temp_file_size 0;
+    
+    proxy_pass http://<%= domain %>;
+    include fastcgi_params;
+    break;
+  }
+  
+  # serve static files
+  location /static {
+    #expires 24h;
+    root <%= @project_root %>;
+    index index.html;
+    break;
+  }
+
+  # serve media files
+  location /media {
+    # If the file exists as a static file serve it directly without
+    # running all the other rewrite tests on it
+    root <%= @project_root %>;
+    break;
+  }
+}

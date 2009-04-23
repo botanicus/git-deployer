@@ -1,48 +1,19 @@
-#!/usr/bin/env ruby1.8
+#!/usr/bin/env ruby1.9
 
 require "find"
-require "rubygems"
-require "term/ansicolor"
+require "git-deploy/common"
 
-String.send(:include, Term::ANSIColor)
-
-branch  = File.basename(Dir.pwd)
-project = Regexp::quote(File.basename(File.dirname(Dir.pwd)))
-python  = "python2.6"
-
-Dir.chdir("web")
-#puts "Replacing #{project} with #{branch} ...".blue.bold
-#Find.find(".") do |file|
-#  next unless file.match(/\.py$/)
-#  original = File.readlines(file)
-#  File.open(file, "w") do |stream|
-#    original.each do |line|
-#      # from dytrych.foo import bar => from master.foo import bar
-#      line.gsub!(/(['"])#{project}\./) do
-#        puts "~ #{file.yellow}: #{line}"
-#        "#$1#{branch}."
-#      end
-#      # include('dytrych.foo.urls') => include('master.foo.urls')
-#      line.gsub!(/(from|import)\s+#{project}/) do
-#        puts "~ #{file.yellow}: #{line}"
-#        "\\1 #{branch}"
-#      end
-#      stream.puts(line)
-#    end
-#  end
-#end
-
-if File.exist?("production.db")
-  puts "Note: maybe db will need to be deleted and recreated, if you have changed some model's structure.".red.bold
-else
-  puts "Running syncdb ...".blue.bold
-  system("rm development.db 2> /dev/null")
-  system("#{python} manage.py syncdb --noinput")
-  if File.exist?("fixtures.json")
-    puts "Loading fixtures ...".blue.bold
-    system("#{python} manage.py loaddata fixtures.json")
+Dir.chdir("web") do
+  if File.exist?("production.db")
+    note "Note: maybe db will need to be deleted and recreated, if you have changed some model's structure."
+  else
+    info "Running syncdb ..."
+    rm "development.db"
+    python "manage.py syncdb --noinput"
+    if File.exist?("fixtures.json")
+      info "Loading fixtures ..."
+      python "manage.py loaddata fixtures.json"
+    end
   end
+  restart_application
 end
-
-puts "Restarting application ...".blue.bold
-system("touch tmp/restart.txt")

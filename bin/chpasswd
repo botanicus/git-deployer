@@ -1,0 +1,10 @@
+#!/usr/bin/expect
+
+# Usage: chpasswd user passwd
+spawn passwd [lindex $argv 0]
+set password [lindex $argv 1]
+expect "password:"
+send "$password\r"
+expect "password:"
+send "$password\r"
+expect eof

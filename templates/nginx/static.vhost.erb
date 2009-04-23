@@ -1,0 +1,10 @@
+server {
+  listen 80;
+  server_name <%= @domain %>;
+  location / {
+    root <%= @project_root %>;
+    if (-f $request_filename) {
+      break;
+    }
+  }     
+}

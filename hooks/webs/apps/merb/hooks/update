@@ -1,8 +1,10 @@
 #!/bin/bash
 
-PATH="bin:$PATH"
+source /webs/support/git-deploy/common.sh
 
-run() { echo $* && $*; }
+export PATH="bin:$PATH"
 
 run thor merb:gems:redeploy
 run rake db:autoupgrade db:migrate
+
+restart_application

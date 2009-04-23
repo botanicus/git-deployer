@@ -1,8 +1,10 @@
 require "thor-utils"
 
-# TODO: config
 class Server < Thor
-  SERVER = "solaris"
+  def initialize
+    @config = ...
+  end
+
   def ssh(command)
     puts command.blue
     puts %x(ssh #{SERVER} 'zsh <<EOF\nsource /etc/profile\n#{command}\nEOF')
@@ -17,39 +19,18 @@ class Server < Thor
     ssh "#{command} #{args.join(" ")}"
   end
 
-  desc "project", "Run project.sh from server-tools. Run thor server:project --help for more informations"
+  desc "project", "Run project.sh from git-deploy. Run thor server:project --help for more informations"
   def project(*args)
     sudo "project.sh", *args
   end
 
-  desc "backup", "Run backup.sh from server-tools. Example: thor server:backup /etc database"
+  desc "backup", "Run backup.sh from git-deploy. Example: thor server:backup /etc database"
   def backup(*args)
     sudo "backup.sh", *args
   end
 
-  desc "probe", "Run http-probe.rb from server-tools"
+  desc "probe", "Run http-probe.rb from git-deploy"
   def probe
     run "http-probe.rb"
-  end
-
-  class Apache < Thor
-    LOG = "/opt/coolstack/apache2/logs/error_log"
-    desc "restart", "Restart apache"
-    def restart
-      Log.new.clear
-      run "httpd -k restart"
-    end
-
-    class Log < Thor
-      desc "clear", ""
-      def clear
-        run "cat > #{LOG} < /dev/null"
-      end
-
-      desc "show", ""
-      def show
-        run "cat #{LOG}"
-      end
-    end
   end
 end
