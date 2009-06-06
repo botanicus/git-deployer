@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby1.9
+
+require "find"
+require "git-deploy/common"
+
+Dir.chdir("web") do
+  if File.exist?("production.db")
+    note "Note: maybe db will need to be deleted and recreated, if you have changed some model's structure."
+  else
+    info "Running syncdb ..."
+    rm "development.db"
+    python "manage.py syncdb --noinput"
+    if File.exist?("fixtures.json")
+      info "Loading fixtures ..."
+      python "manage.py loaddata fixtures.json"
+    end
+  end
+  restart_application
+end

@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby1.9
+# coding: utf-8
+
+# TODO
+# type=${1%/*} && domain=${1##*/} && shift
+# projectdir="/webs/$type/$domain"
+# 
+# blue "git remote add origin static@77.93.194.146:$projectdir/repo.git"

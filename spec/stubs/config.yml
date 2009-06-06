@@ -1,6 +1,6 @@
 :backupdir: /backups
-:projects: /webs/projects.yml
-:static: /webs/static
+:projects: spec/stubs/webs/projects.yml
+:static: spec/stubs/webs/static
 :keys:
   - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEArjReRBgEwbse+9Ltl6SeXiwhSQ6z0YnShMp7ijLMpPYmeIkNKaoApHjaenJ21zBB9yowGaFpxPN4nJSTMcf8Zoq945zqNP3HZeQEHdk9WzpaB8KVGmGRyeBLWHY3Td7CkYFNJ+bTH7/pXJjXutHDFTcFBuSie1coU8AW1fgjODH6vYgT6NcrIWpTJOq9TwwZke5219fCIb6x+7ENoREJy3Sx1ptVc2B+qovNhExQGL1u/IK8bmSIUEmEOHI+DfXFXZUi/vR9Htge6wmgu9BuSHpMjihBwQVteAFD5v9zAt7pcx0lUT9wgb8s/15eBKnXZNTHlsvLQPOEtMK2Y3Sg5Q==
 :hooks_root: ""

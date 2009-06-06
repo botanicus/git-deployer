@@ -29,8 +29,8 @@ unless [:create, :destroy].include?(action)
   abort "First argument must be create or destroy".red
 end
 
-if Config.user != ENV["USER"]
- abort "You must be #{Config.user}".red
+if CONFIG.user != ENV["USER"]
+ abort "You must be #{CONFIG.user}".red
 end
 
 options = ARGV.to_params

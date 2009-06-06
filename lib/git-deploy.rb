@@ -5,12 +5,12 @@ require "extlib"
 require "fileutils"
 require "ostruct"
 require "term/ansicolor"
-require "git-deploy/argv"
 require "git-deploy/config"
 require "git-deploy/helpers"
-require "git-deploy/mixins"
-require "git-deploy/servers"
-require "git-deploy/project"
-require "git-deploy/application"
+require "git-deploy/core_ext"
+include FileUtils
+
+local  = File.join(File.dirname(__FILE__), "..", "config", "config.yml")
+CONFIG = Config.find_file(ENV["GD_CONFIG"], "/etc/git-deploy.yml", local)
 
 String.send(:include, Term::ANSIColor)

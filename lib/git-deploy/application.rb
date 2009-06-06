@@ -1,21 +1,25 @@
 # coding: utf-8
 
+require "fileutils"
+require "git-deploy/data_struct"
+
+# === Create === #
+# - git clone repo.git master
+# - write metadata
+# - generate vhost
+# - register vhost
+# - symlink hooks
+
+# === Destroy === #
+# - rm -rf master
+# - remove vhost
+# - unregister vhost
+
 # represents a branch
-class Application
-  include FileUtils
-  include MetadataMixin
-  include ChdirMixin
-  include HooksMixin
-  attr_reader :root, :name
-  def initialize(root)
-    raise "Not Found" unless File.directory?(root)
-    @root = root
-    @name = File.basename(root)
-    self.include_server_tasks
-  end
-  
-  def include_server_tasks
-    server_module = Object.full_const_get(self.metadata[:server].camel_case)
+class Application < DataStruct
+  attr_accessor :project
+  def setup
+    server_module = Object.full_const_get(self.config.server.camel_case)
     self.class.send(:include, server_module)
   end
   
