@@ -1,9 +1,9 @@
-#!/usr/bin/env ruby1.9
+#!/usr/bin/env ruby
 # coding: utf-8
 
+# TODO: base = File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__
 begin
   require "yaml"
-  require "rubygems"
   require "term/ansicolor"
 rescue LoadError
   STDERR.puts("Run gem install term-ansicolor first.")

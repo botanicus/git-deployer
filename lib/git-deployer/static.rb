@@ -1,6 +1,6 @@
 # coding: utf-8
 
-require "git-deploy/data_struct"
+require "git-deployer/data_struct"
 
 # main config:
 # :static: /webs/static

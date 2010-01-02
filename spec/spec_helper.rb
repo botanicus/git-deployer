@@ -8,4 +8,4 @@ ENV["GD_CONFIG"] = File.join(STUBS, "config.yml")
 
 $:.unshift(File.join(ROOT, "lib"))
 
-require "git-deploy"
+require "git-deployer"

@@ -1,7 +1,7 @@
 # coding: utf-8
 
 require "fileutils"
-require "git-deploy/data_struct"
+require "git-deployer/data_struct"
 
 # === Create === #
 # - git clone repo.git master

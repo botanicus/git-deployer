@@ -1,10 +1,10 @@
-#!/usr/bin/env ruby1.9
+#!/usr/bin/env ruby
 # coding: utf-8
 
 # Usage:
 # apps.rb start
 
-require "git-deploy"
+require "git-deployer"
 
 Application.all.each do |app|
   case action = ARGV.first.to_sym

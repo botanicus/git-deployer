@@ -10,7 +10,7 @@
 
 # this will be merged with project-specific configuration in branch/deploy.yml
 :python: python2.6
-:ruby: ruby1.9
+:ruby: ruby
 :shell: /usr/bin/zsh
 :log_files:
   - log/access.log

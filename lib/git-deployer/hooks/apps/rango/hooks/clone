@@ -1,6 +1,6 @@
-#!/usr/bin/env ruby1.9
+#!/usr/bin/env ruby
 
-require "git-deploy/common"
+require "git-deployer/common"
 
 # tmp for tmp/restart.txt
 mkdir "tmp"
@@ -8,7 +8,7 @@ mkdir "tmp"
 @branch = File.basename(Dir.pwd)
 @path = Dir.pwd
 @project = File.dirname(Dir.pwd)
-ruby = "ruby1.9"
+ruby = "ruby"
 
 # dytrych vs. botablog.cz
 @env = @project.match(/\./) && @branch.eql?("master") ? "production" : "development"

@@ -1,7 +1,7 @@
 # coding: utf-8
 
 require File.join(Dir.pwd, "spec", "spec_helper")
-require "git-deploy/application"
+require "git-deployer/application"
 
 describe Application do
   before(:each) do

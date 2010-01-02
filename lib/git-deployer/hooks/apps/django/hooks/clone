@@ -1,6 +1,6 @@
-#!/usr/bin/env ruby1.9
+#!/usr/bin/env ruby
 
-require "git-deploy/common"
+require "git-deployer/common"
 
 # tmp for tmp/restart.txt
 mkdir "tmp"

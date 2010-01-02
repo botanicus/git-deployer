@@ -1,7 +1,7 @@
 # coding: utf-8
 
 require File.join(Dir.pwd, "spec", "spec_helper")
-require "git-deploy/static"
+require "git-deployer/static"
 
 def owner(file)
   require "etc"

@@ -1,7 +1,7 @@
 # coding: utf-8
 
 require "fileutils"
-require "git-deploy/data_struct"
+require "git-deployer/data_struct"
 
 # === Create === #
 # - mkdir /webs/rango/101ideas.cz
@@ -100,7 +100,7 @@ class Project < DataStruct
 
   # TODO: spec it
   def write_init_metadata
-    # - ruby (ruby1.9) / python (python 2.6) => interpret
+    # - ruby (ruby) / python (python 2.6) => interpret
     # - ports (4000, 4001, 4002) => vezme se posledni projekt v projects.yml a vezme se jeho last port
     @config = Config.save("metadata.yml", ports: self.get_ports.to_a, server: @type.config.server, interpret: @type.config.server)
   end

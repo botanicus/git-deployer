@@ -1,11 +1,11 @@
-#!/usr/bin/env ruby1.9
+#!/usr/bin/env ruby
 # coding: utf-8
 
 # Usage:
 # app 101ideas.cz/master restart
 # app 101ideas.cz restart
 
-require "git-deploy"
+require "git-deployer"
 
 action = ARGV.shift.to_sym
 applications = ARGV.map { |arg| Application.new(arg) }

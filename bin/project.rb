@@ -1,8 +1,9 @@
-#!/usr/bin/env ruby1.9
+#!/usr/bin/env ruby
 # coding: utf-8
 
+# TODO: base = File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__
 $:.unshift(File.join(File.dirname(__FILE__), "..", "lib"))
-require "git-deploy"
+require "git-deployer"
 
 if ARGV.length < 2
   puts "=== Usage ===".red

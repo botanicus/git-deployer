@@ -1,7 +1,7 @@
 h1. Post receive hook
 
 - reads /etc/profile
-This hook runs after git push on your remote server. It supposed there is project/repo. When you first run push on this repo, the code is cloned into project/[branch] is created, and here some necessary files and directories are created. Then vhost file in projectdir/vhost/[branch].vhost is generated (it needs vhost-gen from git-deploy or your own hook
+This hook runs after git push on your remote server. It supposed there is project/repo. When you first run push on this repo, the code is cloned into project/[branch] is created, and here some necessary files and directories are created. Then vhost file in projectdir/vhost/[branch].vhost is generated (it needs vhost-gen from git-deployer or your own hook
 After the whole hook run application is restarted by touch tmp/restart.txt (which is Phussion Passenger way how to restart an application).
 
 h1. Dependencies
@@ -9,7 +9,7 @@ h1. Dependencies
 - Git (of course)
 - Apache
 - Phusion Passenger (I'm using it for running Rails, Merb & Django, but it will be easy to work without it)
-- http://github.com/botanicus/git-deploy
+- http://github.com/botanicus/git-deployer
 
 h1. File hierarchy
 
