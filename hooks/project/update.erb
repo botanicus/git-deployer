@@ -1,9 +1,0 @@
-#!/bin/sh
-
-# This hooks run after each git push. If a new branch is created, than the clone hook runs first.
-
-run "gem bundle --cached"
-run "./tasks.rb db:autoupgrade"
-
-info "Restarting application ..."
-run "touch tmp/restart.txt"

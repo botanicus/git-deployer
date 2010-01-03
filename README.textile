@@ -1,146 +1,38 @@
-h1. Post receive hook
+h1. About
 
-- reads /etc/profile
-This hook runs after git push on your remote server. It supposed there is project/repo. When you first run push on this repo, the code is cloned into project/[branch] is created, and here some necessary files and directories are created. Then vhost file in projectdir/vhost/[branch].vhost is generated (it needs vhost-gen from git-deployer or your own hook
-After the whole hook run application is restarted by touch tmp/restart.txt (which is Phussion Passenger way how to restart an application).
+This is simple and flexible deployment solution based on Git post-receive hook.
 
-h1. Dependencies
+* You don't have to install anything on your server
+* It works with whichever thinkable solution, Rails, Merb, "Rango":http://github.com/botanicus/rango, Sinatra or even Django or static pages, it just doesn't matter!
+* It's easy and transparent
 
-- Git (of course)
-- Apache
-- Phusion Passenger (I'm using it for running Rails, Merb & Django, but it will be easy to work without it)
-- http://github.com/botanicus/git-deployer
+The obvious limitation of this approach is that you can't deploy to multiple servers at one time. Well, due to Git's distributed nature it would be easy to do so, but you would have to do @git push server1 master && git push server2 master@ or write your custom script.
 
-h1. File hierarchy
+h1. Usage
 
-<pre>
-project_type/project/repo.git
-project_type/project/vhosts/[branch].vhost
-project_type/project/[branch]
-project_type/support/hooks/clone
-project_type/support/hooks/update
-project_type/support/tools/vhost-gen
-</pre>
+# Run @gem install git-deployer --development@
+# Add @load "git-deployer.nake"@ to your file with "Nake":http://github.com/botanicus/nake tasks
+# Install hooks via @./tasks.rb deployer:install@
+# Edit @hooks/clone@ and @hooks/update@
+# Install post-receive hook and create necessary directories via @./tasks.rb deployer:install@
+# Push your changes via @git push origin master@
 
-h1. Hooks
+That's it. When you run @git push origin master@ for the first time, it should found that given branch isn't cloned yet, so it should
 
-h2. Clone hook
+h1. Customization
 
-This hook is run when project sources aren't cloned to [branch] directory yet. It creates log for apache logs and tmp for tmp/restart.txt.
+It was pretty easy, was it? But what if I want ...
 
-h2. Update hook
+h2. Restricting Just for @deploy@ Branch
 
-Firstly, changed files are reset to avoid problems during rebase. Then rebase is run and last step is update hook. You can have local hook in support/hooks/update in your app or global hook in project/../support/hooks/update. Just first found is executed.
+You might not want to deploy every branch you push to origin.
 
-The hook runs after each sources update, even after first clone. It is great place to run your migrations, loading fixtures etc.
-system vs. app update hook (just first)
+h1. FAQ
 
-h2. Vhost generation
+# I had typo in my hooks, so it failed during deploy, how can I rerun it?
 
-If vhost for current branch doesn't exist, it is created. After vhost generation Apache is restarted.
+@./tasks.rb deployer:run@
 
-h1. Server.thor
+# You are using "Nake":http://github.com/botanicus/nake, but everyone's using Rake. Is there any chance that you will support Rake in future?
 
-This file contains most common server tasks, restarting apache, running project.sh, http-probe.rb etc.
-
-<pre>
-# install them globally
-thor install server.thor --as=server
-
-# see all the tasks
-thor -T server
-
-# run thor task
-thor server:project --help
-</pre>
-
-h1. Tools
-
-h2. backup.sh
-
-h3. Usage
-
-<pre>
-backup.sh databases
-backup.sh uploads
-backup.sh /etc
-backup.sh databases /etc
-</pre>
-
-h3. Environment
-
-<pre>
-DATADIR   points to dir with data [Example: /webs/data]
-BACKUPDIR points to dir with data [Example: /webs/backups]
-</pre>
-
-h2. branch.sh
-
-h3. Usage
-
-<pre>
-branch.sh [create|destroy] [type]/[domain] branch [options]
-branch.sh create merb/botablog.cz alpha
-</pre>
-
-h3. Arguments
-
-<pre>
-Types:  merb, rails, django, static
-Domain: example.com
-</pre>
-
-h3. Options
-
-<pre>
---branches=alpha,beta,stable
---database=[mysql|sqlite]
---include-data
-</pre>
-
-h3. Environment
-
-<pre>
-BACKUPDIR points to dir with data [Example: /webs/backups]
-</pre>
-
-h2. project.sh
-
-h3. Usage
-
-<pre>
-createproject.sh [create|destroy] [type]/[domain]  [options]
-createproject.sh create apps/merb/botablog.cz [options]
-</pre>
-
-h3. Arguments
-
-<pre>
-Types:  apps/merb, apps/rails, apps/django, static
-Domain: example.com
-</pre>
-
-h3. Options
-
-<pre>
---branches=alpha,beta,stable
---database=[mysql|sqlite]
---uploads
-</pre>
-
-h3. Environment
-
-<pre>
-BACKUPDIR points to dir with data [Example: /webs/data/backups]
-</pre>
-
-h2. sendremote.sh
-
-h3. Environment
-
-<pre>
-BACKUPDIR    points to dir with data [Example: /webs/data/backups]
-BACKUPSERVER points to remote server [Example: backup@remote.com:]
-BACKUPSERVERPORT points to remote server SSH port [Example: 22]
-BACKUPSERVERPATH points to path on remote server where are placed backups [Example: /backups]
-</pre>
+The trouble with Rake is that Rake doesn't support configuration and it also really suck in command-line parsing. If Rake will support at least the command line arguments in a reasonable way, I can think about it.

@@ -1,23 +1,6 @@
 #!/usr/bin/env nake
 
-Task.new("deployer:install") do |task|
-  task.description = "Install git-deployer hooks to the project"
-  task.define do |options|
-    source = File.expand_path(File.join(File.dirname(__FILE__), "..", "hooks", "project"))
-    target = File.expand_path(File.join(File.dirname($0), "..", "hooks"))
-    mkdir_p target
-    Dir.glob("#{source}/*").each do |hook|
-      path = File.join(target, File.basename(hook))
-      note "Copying #{hook} to #{path}"
-      if ! File.exist?(path) || options[:force]
-        cp hook, target
-        sh "chmod +x #{path}"
-      else
-        abort "File #{path} already exist. Run this hook with --force to override the file."
-      end
-    end
-  end
-end
+require "nake/template"
 
 module SshMixin
   def ssh(command)
@@ -29,6 +12,33 @@ module SshMixin
   end
 end
 
+Task.new("deployer:install") do |task|
+  task.description = "Install git-deployer hooks to the project"
+
+  # path to the given hook
+  task.define_singleton_method(:path) do |name, options|
+    basename = options[:executable] ? "#{name}.exec.erb" : "#{name}.source.erb"
+    File.join(File.dirname(__FILE__), "..", "hooks", "project", basename)
+  end
+
+  # install given hook from its template
+  task.define_singleton_method(:install) do |source, target, options|
+    mkdir_p File.dirname(target)
+    note "Creating #{target} from #{source}"
+    if ! File.exist?(target) || options[:force]
+      erb source, target, options: options
+      sh "chmod +x #{target}" if options[:executable]
+    else
+      abort "File #{target} already exist. Run this hook with --force to override the file."
+    end
+  end
+
+  task.define do |options|
+    self.install(self.path("clone", options),  "hooks/clone", options)
+    self.install(self.path("update", options), "hooks/update", options)
+  end
+end
+
 Task.new("deployer:setup") do |task|
   task.description = "Install Git hooks on remote server"
   task.extend(SshMixin)
@@ -37,7 +47,7 @@ Task.new("deployer:setup") do |task|
     unless ssh "test -d #{config[:path]}"
       ssh "mkdir -p #{config[:path]}/{repo.git,webs}"
       ssh "cd #{config[:path]}/repo.git && git init --bare"
-      Task["deployer:copy_hook"].call(options)
+      Task["deployer:remote:copy_hook"].call(options)
       info "Run this: git remote add origin #{uri}:#{config[:path]}/repo.git"
     else
       abort "Given path already exist"
@@ -45,16 +55,41 @@ Task.new("deployer:setup") do |task|
   end
 end
 
-Task.new("deployer:copy_hook") do |task|
+Task.new("deployer:remote:copy_hook") do |task|
   task.description = "Copy Git hook to remote server"
   task.config = Task["deployer:setup"].config
   task.extend(SshMixin)
   task.define do |options|
-    local  = File.join(File.dirname($0), "hooks", "post-receive")
-    global = File.join(File.dirname(__FILE__), "..", "hooks", "server", "post-receive")
-    hook   = [local, global].find { |hook| File.exist?(hook) }
-    sh "scp #{hook} #{uri}:#{config[:path]}/repo.git/hooks"
+    if File.exist?(File.join(File.dirname($0), "hooks", "post-receive"))
+      info "Using local hook from hooks/post-receive"
+      hook = File.join(File.dirname($0), "hooks", "post-receive")
+    else
+      info "Generating hook from default post-receive template"
+      hook = "post-receive-#{rand(1_000_000_000_000_000)}"
+      Task["deployer:copy_hook"].call(hook, *task.original_args)
+    end
+    sh "scp #{hook} #{uri}:#{config[:path]}/repo.git/hooks/post-receive"
     ssh "chmod +x #{config[:path]}/repo.git/hooks/post-receive"
+    sh "rm #{hook}" if defined?(template)
+  end
+end
+
+# ./tasks.rb deployer:copy_hook
+# ./tasks.rb deployer:copy_hook --force
+# ./tasks.rb deployer:copy_hook --shebang
+# Task["deployer:copy_hook"].config[:shebang] = "#!/bin/zsh"
+# Task["deployer:copy_hook"].config[:debug] = true
+# Task["deployer:copy_hook"].config[:branch] = "master" # if you want to deploy just given branch
+Task.new("deployer:copy_hook") do |task|
+  task.description = "Copy Git hook locally, so you can edit it and at the next remote copy it will be used instead of the hook distributed with git-deployer."
+  task.define do |path = "hooks/post-receive", options|
+    template = File.join(File.dirname(__FILE__), "..", "hooks", "server", "post-receive.erb")
+    if ! File.exist?(path) || options[:force]
+      context = {shebang: "#!/bin/sh", debug: true, branch: nil}.merge(config).merge(options)
+      erb template, path, context
+    else
+      abort "File #{path} already exist. Run this task with --force option to override."
+    end
   end
 end
 
