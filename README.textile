@@ -4,14 +4,22 @@ This is simple and flexible deployment solution based on Git post-receive hook.
 
 * You don't have to install anything on your server
 * It works with whichever thinkable solution, Rails, Merb, "Rango":http://github.com/botanicus/rango, Sinatra or even Django or static pages, it just doesn't matter!
-* It's easy and transparent
-
-The obvious limitation of this approach is that you can't deploy to multiple servers at one time. Well, due to Git's distributed nature it would be easy to do so, but you would have to do @git push server1 master && git push server2 master@ or write your custom script.
+* Deployment to more servers is supported.
 
 h1. Usage
 
 # Run @gem install git-deployer --development@
-# Add @load "git-deployer.nake"@ to your file with "Nake":http://github.com/botanicus/nake tasks
+# Add following lines to your file with "Nake":http://github.com/botanicus/nake tasks (I'll refer this file as @tasks.rb@):
+<pre>
+begin
+  load "git-deployer.nake"
+  Task["deployer:setup"].config[:user] = "root"
+  Task["deployer:setup"].config[:host] = "tagadab"
+  Task["deployer:setup"].config[:path] = "/var/www/deploy-test"
+rescue LoadError
+  warn "You have to install git-deployer gem if you want to deploy to remote servers!"
+end
+</pre>
 # Install hooks via @./tasks.rb deployer:install@
 # Edit @hooks/clone@ and @hooks/update@
 # Install post-receive hook and create necessary directories via @./tasks.rb deployer:install@
@@ -22,6 +30,10 @@ That's it. When you run @git push origin master@ for the first time, it should f
 h1. Customization
 
 It was pretty easy, was it? But what if I want ...
+
+h2. Deployment to More Servers
+
+@git push server1 master && git push server1 master@
 
 h2. Restricting Just for @deploy@ Branch
 
