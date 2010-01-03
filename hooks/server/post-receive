@@ -52,16 +52,26 @@ else
   info "Cloning $branch to $(pwd)/webs/$branch (HEAD: '$new') ..."
   git clone repo.git webs/$branch
   cd webs/$branch
-  info "[$PWD] Running clone hook"
-  . "./hooks/clone" # so user can use functions defined in this hook in his clone hook
-  exit
+  if [ -x "hooks/clone" ] ; then
+    info "[$PWD] Running clone hook"
+    exec "./hooks/clone"
+  elif [ -f "hooks/clone" ] ; then
+    info "[$PWD] Loading clone hook"
+    . "./hooks/clone" # so user can use functions defined in this hook in his clone hook
+    exit $?
+  else
+    abort "No clone hook found!"
+  fi
 fi
 
 # Update hook
 if [ -x "hooks/update" ] ; then
-  info "Runnings project's update hook"
-  . "./hooks/update"
-  exit
+  info "[$PWD] Running update hook"
+  exec "./hooks/update"
+elif [ -f "hooks/update" ] ; then
+  info "[$PWD] Loading update hook"
+  . "./hooks/update" # so user can use functions defined in this hook in his update hook
+  exit $?
 else
-  abort "Update hook doesn't exist or isn't executable"
+  abort "No update hook found!"
 fi

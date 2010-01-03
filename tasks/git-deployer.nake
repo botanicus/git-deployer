@@ -38,7 +38,7 @@ Task.new("deployer:setup") do |task|
       ssh "mkdir -p #{config[:path]}/{repo.git,webs}"
       ssh "cd #{config[:path]}/repo.git && git init --bare"
       Task["deployer:copy_hook"].call(options)
-      sh "git remote add origin #{uri}:#{config[:path]}/repo.git"
+      info "Run this: git remote add origin #{uri}:#{config[:path]}/repo.git"
     else
       abort "Given path already exist"
     end
@@ -50,18 +50,11 @@ Task.new("deployer:copy_hook") do |task|
   task.config = Task["deployer:setup"].config
   task.extend(SshMixin)
   task.define do |options|
-    hook = File.join(File.dirname(__FILE__), "..", "hooks", "server", "post-receive")
+    local  = File.join(File.dirname($0), "hooks", "post-receive")
+    global = File.join(File.dirname(__FILE__), "..", "hooks", "server", "post-receive")
+    hook   = [local, global].find { |hook| File.exist?(hook) }
     sh "scp #{hook} #{uri}:#{config[:path]}/repo.git/hooks"
     ssh "chmod +x #{config[:path]}/repo.git/hooks/post-receive"
-  end
-end
-
-Task.new("deployer:test") do |task|
-  task.description = "Test"
-  task.define do
-    File.open("test.txt", "a") { |file| file.puts("Dummy string") }
-    sh "git add test.txt"
-    sh "git commit test.txt -m 'Test commit'"
   end
 end
 
@@ -70,8 +63,10 @@ Task.new("deployer:run") do |task|
   task.config = Task["deployer:setup"].config
   task.extend(SshMixin)
   task.define do
-    # TODO
     # STDIN for post-receive:
-    # 0000000000000000000000000000000000000000 249d062308606b6de6eac6fe165391031e4f571d refs/heads/master
+    # SHA1 SHA1 refs/heads/master
+    head = `git rev-parse HEAD`
+    refs = `cat .git/HEAD | awk '{ print $2 }'`
+    ssh "cd #{config[:path]} && echo #{head} #{head} #{refs} | ./hooks/post-receive"
   end
 end
