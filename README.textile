@@ -42,7 +42,8 @@ This task will copy @hooks/clone@ and @hooks/update@ hooks to your project. This
 
 h3. Task @deployer:setup@
 
-It can take one or more optional arguments with 
+It can take one or more optional arguments with
+It takes the same arguments resp. configuration options as @deployer:copy_hook@ task
 
 h3. Task @deployer:copy_hook@
 
@@ -52,17 +53,19 @@ h3. Task @deployer:remote:copy_hook@
 
 Again, you typically don't need this task, because it run during @deployer:setup@. However if you changed something in the @post-receive@ hook, you might want to run this task which will install @post-receive@ on remote servers. By default the hook will be installed to all the servers, but you can specify just a subset via @./tasks.rb deployer:remote:copy_hook server1 server2@.
 
+h4. Setup
+
+h2. Restricting Just for @deploy@ Branch
+
+You might not want to deploy every branch you push to origin.
+
 h3. Task @deployer:run@
 
 If you pushed to the remote server but the hook failed, this is the way how you can re-run it. Just fix the problem and run @./tasks.rb deployer:run@. By default it runs on all the servers, but you can run it just on some servers via @./tasks.rb deployer:run server1 server2@.
 
 h3. Task @deploy@
 
-This task is useful for deployment to multiple servers. Just run @git push server1 master && git push server1 master@ or @./tasks.rb deploy@ which is a shortcut for pushing current branch to all or specified remote servers.
-
-h2. Restricting Just for @deploy@ Branch
-
-You might not want to deploy every branch you push to origin.
+This task is useful for deployment to *multiple servers*. Just run @git push server1 master && git push server1 master@ or @./tasks.rb deploy@ which is a shortcut for pushing current branch to all or specified remote servers.
 
 h1. FAQ
 

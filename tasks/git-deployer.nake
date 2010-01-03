@@ -1,40 +1,55 @@
 #!/usr/bin/env nake
 
-# TODO: support for multiple servers
-# Task["deployer:install"][:servers][:first][:host] = "127.0.0.1"
-
 # TODO: what about a console support as capistrano has? Would be so helpful! Or at least ./tasks.rb deployer:ssh which starts ssh session for a server and cd to application path.
 
 require "nake/template"
 
+# === Helpers === #
+
+# TODO: put it to nake
+class Nake::Task
+  def run_from_task(task, *args)
+    self.call(*args)
+  rescue SystemExit => exception
+    Kernel.abort "Exception during task #{task}: #{exception.message}. Please re-run the task.\n#{exception.backtrace.join("\n- ")}"
+  rescue Exception => exception
+    abort "Exception during task #{task}: #{exception.message}. Please re-run the task.\n#{exception.backtrace.join("\n- ")}"
+  end
+end
+
 module SshMixin
-  def ssh(command)
-    sh "ssh #{uri} '#{command}'"
+  def ssh(server, command)
+    sh "ssh %{user}@%{host} '#{command}'" % server
   end
-  
-  def uri
-    "%{user}@%{host}" % config
-  end
-  
-  def repo
-    if config[:repo].match(%r[^/])
-      config[:repo]
-    else
-      File.join(config[:path], config[:repo])
+
+  def servers(config, &block)
+    if ! config.has_key?(:servers) || config[:servers].empty?
+      abort "You have to configure servers. Read documentation online at http://github.com/botanicus/git-deployer"
     end
-  end
-  
-  def target
-    if config[:target].match(%r[^/])
-      config[:target]
-    else
-      File.join(config[:path], config[:target])
+
+    config[:servers].each do |name, server|
+      [:user, :host, :repo, :path].each do |key|
+        unless server.has_key?(key)
+          abort "Server #{name} doesn't have key #{key}, you have to provide it!"
+        end
+      end
+
+      info "Server #{name} #{server.inspect}"
+      block.call(name, server)
     end
   end
 end
 
+# === Tasks === #
+
+# @settings
+#   Task["deployer:install"].config[:executable] = true
+# @options
+#   --[no]-force       Overwrite local hooks. Default is false.
+#   --[no]-executable  Install hooks as executable scripts, so you can use whichever interpret,
+#                      but you can't access to shell functions from post-receive.
 Task.new("deployer:install") do |task|
-  task.description = "Install git-deployer hooks to the project"
+  task.description = "Install clone and update hooks to the project."
 
   # path to the given hook
   task.define_singleton_method(:path) do |name, options|
@@ -60,46 +75,74 @@ Task.new("deployer:install") do |task|
   end
 end
 
-# Task["deployer:setup"].config[:repo] = "repo.git"           # relative path
-# Task["deployer:setup"].config[:repo] = "/sources/myapp.git" # absolute path
+# @settings
+#   Task["deployer:setup"].config[:servers] = {
+#     server1: {
+#       user: "www",
+#       host: "127.0.0.1",
+#       repo: "/var/sources/deploy-test.git",
+#       path: "/var/www/deploy-test"
+#     }
+#   }
+# @options
+#   --[no]-force  Overwrite remote repository and application path. Default is false.
+#   Also, this tasks takes the same arguments as deployer:remote:copy_hook.
+# @see Task["deployer:remote:copy_hook"] for configuring the generation of the post-receive hook.
 Task.new("deployer:setup") do |task|
   task.description = "Install Git hooks on remote server"
   task.extend(SshMixin)
-  
-  # configuration
-  task.config[:repo] = "repo.git"
-  task.config[:target] = "webs"
 
   task.define do |options|
-    ssh "rm -rf #{config[:path]}" if options[:force]
-    unless ssh "test -d #{config[:path]}"
-      ssh "mkdir -p #{repo}"
-      ssh "mkdir -p #{target}"
-      ssh "cd #{config[:path]}/repo.git && git init --bare"
-      Task["deployer:remote:copy_hook"].call(options)
-      info "Run this: git remote add origin #{uri}:#{config[:path]}/repo.git"
-    else
-      abort "Given path already exist"
+    servers(config) do |name, server|
+      if options[:force]
+        ssh server, "test -d %{path} && rm -rf %{path}; test -d %{repo} && rm -rf %{repo}"
+      end
+
+      unless ssh server, "test -d %{path}"
+        ssh server, "mkdir -p %{path}" || abort("Creating of some necessary directories failed.")
+      else
+        abort "Path %{path} already exist. Try to run with --force if you want to overwrite it." % server
+      end
+
+      unless ssh server, "test -d %{repo}"
+        ssh server, "mkdir -p %{repo}" || abort("Creating of some necessary directories failed.")
+        ssh server, "cd %{repo} && git init --bare" || abort("There was a problems during attempt to create a bare repository.")
+        sh "git remote add #{name} %{user}@%{host}:%{repo}" % server
+      else
+        abort "Repository %{repo} already exist. Try to run with --force if you want to overwrite it." % server
+      end
+
+      info "Setup at server #{name} finished"
     end
+
+    # copy post-receive hooks
+    Task["deployer:remote:copy_hook"].run_from_task("deployer:setup", options)
   end
 end
 
 Task.new("deployer:remote:copy_hook") do |task|
   task.description = "Copy Git hook to remote server"
-  task.config = Task["deployer:setup"].config
   task.extend(SshMixin)
 
   task.define do |options|
+    # generate the hook if it doesn't exist
     if File.exist?(File.join("hooks", "post-receive"))
       info "Using local hook from hooks/post-receive"
       hook = File.join("hooks", "post-receive")
     else
       info "Generating hook from default post-receive template"
       hook = "post-receive-#{rand(1_000_000_000_000_000)}"
-      Task["deployer:copy_hook"].call(hook, *task.original_args)
+      Task["deployer:copy_hook"].run_from_task("deployer:remote:copy_hook", hook, *task.original_args)
     end
-    sh "scp #{hook} #{uri}:#{config[:path]}/repo.git/hooks/post-receive"
-    ssh "chmod +x #{config[:path]}/repo.git/hooks/post-receive"
+
+    # copy remote
+    setup = Task["deployer:setup"].config
+    servers(setup) do |name, server|
+      sh "scp #{hook} %{user}@%{host}:%{repo}/hooks/post-receive" % server
+      ssh server, "chmod +x %{repo}/hooks/post-receive"
+    end
+
+    # cleanup
     sh "rm #{hook}" if defined?(template)
   end
 end
@@ -112,6 +155,7 @@ end
 # Task["deployer:copy_hook"].config[:branch] = "master" # if you want to deploy just given branch
 Task.new("deployer:copy_hook") do |task|
   task.description = "Copy Git hook locally, so you can edit it and at the next remote copy it will be used instead of the hook distributed with git-deployer."
+  task.config[:colors] = true
 
   task.define do |path = "hooks/post-receive", options|
     template = File.join(File.dirname(__FILE__), "..", "hooks", "server", "post-receive.erb")
@@ -126,14 +170,15 @@ end
 
 Task.new("deployer:run") do |task|
   task.description = "Run remote hook"
-  task.config = Task["deployer:setup"].config
   task.extend(SshMixin)
 
+  # STDIN for post-receive:
+  # SHA1 SHA1 refs/heads/master
   task.define do
-    # STDIN for post-receive:
-    # SHA1 SHA1 refs/heads/master
-    head = `git rev-parse HEAD`
-    refs = `cat .git/HEAD | awk '{ print $2 }'`
-    ssh "cd #{config[:path]} && echo #{head} #{head} #{refs} | ./hooks/post-receive"
+    servers(Task["deployer:setup"].config) do |name, server|
+      head = `git rev-parse HEAD`
+      refs = `cat .git/HEAD | awk '{ print $2 }'`
+      ssh server, "cd %{path} && echo #{head} #{head} #{refs} | ./hooks/post-receive"
+    end
   end
 end
