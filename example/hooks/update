@@ -1,0 +1,5 @@
+run "gem bundle --cached"
+run "./tasks.rb db:autoupgrade"
+
+info "Restarting application ..."
+run "touch tmp/restart.txt"

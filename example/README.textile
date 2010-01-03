@@ -1,0 +1,9 @@
+h1. About
+
+This is a "git-deployer":http://github.com/botanicus/git-deployer demo.
+
+h1. Usage
+
+# Edit connection details in tasks.rb
+# Ensure you have "Nake":http://github.com/botanicus/nake task manager installed
+#

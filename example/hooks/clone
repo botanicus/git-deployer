@@ -1,0 +1,4 @@
+# This hooks run when a new branch is pushed.
+# It's just a standard executable script, feel free to use ruby, python, shell or whatever.
+
+test -d log || run "mkdir log"
