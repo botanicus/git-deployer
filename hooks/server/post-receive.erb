@@ -28,6 +28,7 @@ old=$1 && new=$2 && ref=$3
 export BRANCH=$(basename $ref)
 export DEBUG=<%= debug %>
 export TARGET="<%= target %>"
+export REPO="<%= repo %>"
 
 <% if branch %>
 # restrict deployment just to given branch
@@ -37,16 +38,10 @@ if [ $BRANCH != <%= branch %> ]
 fi
 <% end %>
 
-# POST-UPDATE HOOK
-# ARGV: $1 is BRANCH
-# STDIN: ?
-#BRANCH=$(basename $1)
-
-cd ..
-root=`pwd`
+cd $(dirname $TARGET) # the target might not exist yet
 
 # GIT_DIR is "." which should points to bare repozitory
-GIT_DIR="$PWD/$TARGET/.git"
+GIT_DIR="$REPO"
 
 info "Reading /etc/profile ..."
 . /etc/profile
@@ -61,14 +56,14 @@ debug "Ruby path: $(which ruby)"
 debug
 
 if [ -d $TARGET ] ; then
-  cd webs/$BRANCH
+  cd $TARGET
   info "Updating $BRANCH in `pwd` ... (from $old' to '$new')"
   git fetch
   git reset $new --hard
 else
-  info "Cloning $BRANCH to $(pwd)/webs/$BRANCH (HEAD: '$new') ..."
-  git clone repo.git webs/$BRANCH
-  cd webs/$BRANCH
+  info "Cloning $BRANCH to $(pwd)/$TARGET (HEAD: '$new') ..."
+  git clone $REPO $TARGET
+  cd $TARGET
   if [ -x "hooks/clone" ] ; then
     info "[$PWD] Running clone hook"
     exec "./hooks/clone"

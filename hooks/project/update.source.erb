@@ -14,7 +14,7 @@
 # 2) Your application will be as a subdirectory of the root of the repository,
 #    so you may call it whatever you want.
 # 3) Obviously the best solution is to change the post-receive script, for example:
-#    Task["deployer:copy_hook"].config[:target] = "myappname"
+#    Task["deployer:compile_hook"].config[:target] = "myappname"
 
 # Make sure this script isn't executable, otherwise the script will simply run,
 # so you won't have access to shell functions from the post-receive hook.

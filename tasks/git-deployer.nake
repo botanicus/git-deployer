@@ -121,48 +121,77 @@ Task.new("deployer:setup") do |task|
 end
 
 # @options
-#   This tasks takes the same arguments as deployer:copy_hook.
-# @see Task["deployer:copy_hook"] for configuring generation of the post-receive hook.
+#   This tasks takes the same arguments as deployer:compile_hook.
+# @see Task["deployer:compile_hook"] for configuring generation of the post-receive hook.
 Task.new("deployer:remote:copy_hook") do |task|
   task.description = "Copy Git hook to remote server"
   task.extend(SshMixin)
 
-  task.define do |options|
-    # generate the hook if it doesn't exist
-    if File.exist?(File.join("hooks", "post-receive"))
-      info "Using local hook from hooks/post-receive"
-      hook = File.join("hooks", "post-receive")
-    else
-      info "Generating hook from default post-receive template"
-      hook = "post-receive-#{rand(1_000_000_000_000_000)}"
-      Task["deployer:copy_hook"].run_from_task("deployer:remote:copy_hook", hook, *task.original_args)
-    end
+  # TODO: change gemspec to require Ruby 1.9
+  task.define_singleton_method(:template) do |path|
+    path.ends_with?(".erb") ? path : compile_template(path)
+  end
 
-    # copy remote
+  # Template precedence:
+  #   1) hooks/post-receive.server_name
+  #   2) hooks/post-receive.server_name.erb
+  #   3) hooks/post-receive
+  #   3) hooks/post-receive.erb
+  #   5) the default template distributed with git-deployer
+  task.define_singleton_method(:find_template) do |name|
+    ["hooks/post-receive.#{name}", "hooks/post-receive"].find do |template|
+      File.exist?(template)
+    end
+  end
+
+  # @return [String] path to the post-receive hook which was generated
+  task.define_singleton_method(:compile_template) do |name|
+    ["hooks/post-receive.#{name}.erb", "hooks/post-receive.erb"].each do |template|
+      if File.exist?(template)
+        info "Compiling template #{template}"
+        copy_hook, args = Task["deployer:compile_hook"], template, task.original_args
+        return copy_hook.run_from_task(task.name, template, *args, options) # TODO
+      end
+    end
+  end
+
+  task.define_singleton_method(:upload) do |server, local_path|
+    sh "scp #{local_path} %{user}@%{host}:%{repo}/hooks/post-receive" % server
+    ssh server, "chmod +x %{repo}/hooks/post-receive"
+  end
+
+  task.define do |options|
     setup = Task["deployer:setup"].config
     servers(setup) do |name, server|
-      sh "scp #{hook} %{user}@%{host}:%{repo}/hooks/post-receive" % server
-      ssh server, "chmod +x %{repo}/hooks/post-receive"
+      # generate the hook if it doesn't exist
+      if local_path = self.find_template(name)
+        info "Using hook #{path}"
+        self.upload(server, local_path)
+      elsif local_path = self.compile_template(name)
+        self.upload(server, local_path)
+        sh "rm #{local_path}"
+      else
+        template = File.join(File.dirname(__FILE__), "..", "hooks", "server", "post-receive.erb")
+        Task["deployer:compile_hook"].run_from_task(task.name, template, *task.original_args, options)
+        info "Generating hook from default post-receive template"
+        local_path = "post-receive-#{rand(1_000_000_000_000_000)}"
+        self.upload(server, local_path)
+        sh "rm #{local_path}"
+      end
     end
-
-    # cleanup
-    sh "rm #{hook}" if defined?(template)
   end
 end
 
-# ./tasks.rb deployer:copy_hook
-# ./tasks.rb deployer:copy_hook --force
-# ./tasks.rb deployer:copy_hook --shebang="#!/bin/zsh"
-# Task["deployer:copy_hook"].config[:shebang] = "#!/bin/zsh"
-# Task["deployer:copy_hook"].config[:debug] = true
-# Task["deployer:copy_hook"].config[:branch] = "master" # if you want to deploy just given branch
+# TODO: Task["deployer:compile_hook"].config[:colors] is fine, but there should be also server-specific configuration in Task["deployer:setup"].config[:servers][:origin][:colors]
 
+# @example
+#   ./tasks.rb deployer:compile_hook hooks/post-receive.erb --colors
 # @settings
-#   Task["deployer:copy_hook"].config[:colors]  = false
-#   Task["deployer:copy_hook"].config[:debug]   = true
-#   Task["deployer:copy_hook"].config[:branch]  = "master"
-#   Task["deployer:copy_hook"].config[:shebang] = "#!/usr/bin/env ruby"
-#   Task["deployer:copy_hook"].config[:target]  = "$BRANCH"
+#   Task["deployer:compile_hook"].config[:colors]  = false
+#   Task["deployer:compile_hook"].config[:debug]   = true
+#   Task["deployer:compile_hook"].config[:branch]  = "master"
+#   Task["deployer:compile_hook"].config[:shebang] = "#!/usr/bin/env ruby"
+#   Task["deployer:compile_hook"].config[:target]  = "$BRANCH"
 # @options
 #   --[no-]force            Overwrite local post-receive hook. Default is keep it.
 #   --[no-]colors           Do not use colors in the hook. Some servers might have problems with them.
@@ -174,17 +203,37 @@ end
 #                           i. e. /var/www/myapp/master. Empty target means put everything directly into the apps root. It's reasonable
 #                           just if you specify also the --branch=mybranch switch, otherwise the code will be reset in each push to the
 #                           different branch which isn't probably what you want. But if you deploy just one branch, then it's OK.
+Task.new("deployer:compile_hook") do |task|
+  task.description = "Copy Git hook locally, so you can edit it and at the next remote copy it will be used instead of the hook distributed with git-deployer."
+
+  # default configuration
+  task.config[:shebang] = "#!/bin/sh"
+  task.config[:debug]   = true
+  task.config[:colors]  = true
+  task.config[:branch]  = nil
+  task.config[:target]  = "$BRANCH"
+
+  task.define do |source = nil, options|
+    abort "You have to specify the template you want to compile!" if source.nil?
+    abort "First argument has to be a template with .erb extension!" unless source.ends_with?(".erb")
+    target = source.sub(/\.erb$/, "")
+    if ! File.exist?(target) || options[:force]
+      erb source, target, {repo: server[:repo]}.merge(config).merge(options)
+    else
+      abort "File #{target} already exist. Run this task with --force option to override."
+    end
+  end
+end
+
 Task.new("deployer:copy_hook") do |task|
   task.description = "Copy Git hook locally, so you can edit it and at the next remote copy it will be used instead of the hook distributed with git-deployer."
-  task.config[:colors] = true
 
-  task.define do |path = "hooks/post-receive", options|
-    template = File.join(File.dirname(__FILE__), "..", "hooks", "server", "post-receive.erb")
-    if ! File.exist?(path) || options[:force]
-      context = {shebang: "#!/bin/sh", debug: true, branch: nil, target: "$BRANCH"}.merge(config).merge(options)
-      erb template, path, context
+  task.define do |target = "hooks/post-receive", options|
+    source = File.join(File.dirname(__FILE__), "..", "hooks", "server", "post-receive.erb")
+    if ! File.exist?(target) || options[:force]
+      cp source, target
     else
-      abort "File #{path} already exist. Run this task with --force option to override."
+      abort "File #{target} already exist. Run this task with --force option to override."
     end
   end
 end

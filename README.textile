@@ -43,9 +43,9 @@ This task will copy @hooks/clone@ and @hooks/update@ hooks to your project. This
 h3. Task @deployer:setup@
 
 It can take one or more optional arguments with
-It takes the same arguments resp. configuration options as @deployer:copy_hook@ task
+It takes the same arguments resp. configuration options as @deployer:compile_hook@ task
 
-h3. Task @deployer:copy_hook@
+h3. Task @deployer:compile_hook@
 
 This task will copy @hooks/post-receive@ hook to your project. This step is optional and you will use the task you in case that you aren't happy with the default @post-receive@ hook distributed with git-deployer and you want to customize things. But you shouldn't need this, there is a bunch of arguments which you can use for influencing the generated @post-receive@ hook.
 
