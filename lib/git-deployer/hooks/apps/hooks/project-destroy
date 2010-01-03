@@ -1,5 +1,0 @@
-#!/usr/bin/env ruby
-# coding: utf-8
-
-# TODO
-run "userdel USER"

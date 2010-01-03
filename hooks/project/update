@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# This hooks run after each git push. If a new branch is created, than the clone hook runs first.
+
+# Functions
+error()   { printf "\e[1;31m$*\e[0m\n"; }
+abort()   { error $*; exit 1; }
+success() { printf "\e[1;32m$*\e[0m\n"; }
+info()    { printf "\e[1;34m$*\e[0m\n"; }
+run()     { info $* ; $*; }
+
+run "gem bundle --cached"
+run "./tasks.rb db:autoupgrade"
+
+info "Restarting application ..."
+run "touch tmp/restart.txt"

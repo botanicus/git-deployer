@@ -1,0 +1,77 @@
+#!/usr/bin/env nake
+
+Task.new("deployer:install") do |task|
+  task.description = "Install git-deployer hooks to the project"
+  task.define do |options|
+    source = File.expand_path(File.join(File.dirname(__FILE__), "..", "hooks", "project"))
+    target = File.expand_path(File.join(File.dirname($0), "..", "hooks"))
+    mkdir_p target
+    Dir.glob("#{source}/*").each do |hook|
+      path = File.join(target, File.basename(hook))
+      note "Copying #{hook} to #{path}"
+      if ! File.exist?(path) || options[:force]
+        cp hook, target
+        sh "chmod +x #{path}"
+      else
+        abort "File #{path} already exist. Run this hook with --force to override the file."
+      end
+    end
+  end
+end
+
+module SshMixin
+  def ssh(command)
+    sh "ssh #{uri} '#{command}'"
+  end
+  
+  def uri
+    "%{user}@%{host}" % config
+  end
+end
+
+Task.new("deployer:setup") do |task|
+  task.description = "Install Git hooks on remote server"
+  task.extend(SshMixin)
+  task.define do |options|
+    ssh "rm -rf #{config[:path]}" if options[:force]
+    unless ssh "test -d #{config[:path]}"
+      ssh "mkdir -p #{config[:path]}/{repo.git,webs}"
+      ssh "cd #{config[:path]}/repo.git && git init --bare"
+      Task["deployer:copy_hook"].call(options)
+      sh "git remote add origin #{uri}:#{config[:path]}/repo.git"
+    else
+      abort "Given path already exist"
+    end
+  end
+end
+
+Task.new("deployer:copy_hook") do |task|
+  task.description = "Copy Git hook to remote server"
+  task.config = Task["deployer:setup"].config
+  task.extend(SshMixin)
+  task.define do |options|
+    hook = File.join(File.dirname(__FILE__), "..", "hooks", "server", "post-receive")
+    sh "scp #{hook} #{uri}:#{config[:path]}/repo.git/hooks"
+    ssh "chmod +x #{config[:path]}/repo.git/hooks/post-receive"
+  end
+end
+
+Task.new("deployer:test") do |task|
+  task.description = "Test"
+  task.define do
+    File.open("test.txt", "a") { |file| file.puts("Dummy string") }
+    sh "git add test.txt"
+    sh "git commit test.txt -m 'Test commit'"
+  end
+end
+
+Task.new("deployer:run") do |task|
+  task.description = "Run remote hook"
+  task.config = Task["deployer:setup"].config
+  task.extend(SshMixin)
+  task.define do
+    # TODO
+    # STDIN for post-receive:
+    # 0000000000000000000000000000000000000000 249d062308606b6de6eac6fe165391031e4f571d refs/heads/master
+  end
+end

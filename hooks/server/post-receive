@@ -1,0 +1,65 @@
+#!/bin/sh
+
+# POST-RECEIVE HOOK
+# ARGV: empty
+# STDIN: [OLD HEAD] [NEW HEAD] refs/heads/alpha
+
+# colors
+# TODO: colors doesn't work for some reason
+abort()   { printf "$*\n"; exit 1; }
+success() { printf "$*\n"; }
+info()    { printf "$*\n"; }
+debug()   { $DEBUG && printf "$*\n"; }
+run()     { info $* ; $*; }
+#abort()   { printf "\e[1;31m$*\e[0m\n"; exit 1; }
+#success() { printf "\e[1;32m$*\e[0m\n"; }
+#info()    { printf "\e[1;34m$*\e[0m\n"; }
+
+set -- $(cat /dev/stdin)
+
+old=$1 && new=$2 && ref=$3
+branch=$(basename $ref)
+export DEBUG=true
+
+# POST-UPDATE HOOK
+# ARGV: $1 is branch
+# STDIN: ?
+#branch=$(basename $1)
+
+cd ..
+root=`pwd`
+
+# GIT_DIR is "." which should points to bare repozitory
+GIT_DIR="`pwd`/webs/$branch/.git"
+
+info "Reading /etc/profile ..."
+. /etc/profile
+
+debug
+debug "=== Environment ==="
+debug "PATH: $PATH"
+debug "USER: $USER"
+debug "Ruby version: $(ruby --version)"
+debug "Ruby path: $(which ruby)"
+debug
+
+if [ -d "webs/$branch" ] ; then
+  cd webs/$branch
+  info "Updating $branch in `pwd` ... (from $old' to '$new')"
+  git fetch
+  git reset $new --hard
+else
+  info "Cloning $branch to $(pwd)/webs/$branch (HEAD: '$new') ..."
+  git clone repo.git webs/$branch
+  cd webs/$branch
+  info "[$PWD] Running clone hook"
+  exec "./hooks/clone"
+fi
+
+# Update hook
+if [ -x "hooks/update" ] ; then
+  info "Runnings project's update hook"
+  exec "./hooks/update"
+else
+  abort "Update hook doesn't exist or isn't executable"
+fi

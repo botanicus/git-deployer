@@ -1,7 +1,0 @@
-#!/usr/bin/env ruby
-
-begin
-  require "git-deployer/hooks/apps/rango/clone"
-rescue LoadError
-  abort "You have to install git-deployer gem!"
-end

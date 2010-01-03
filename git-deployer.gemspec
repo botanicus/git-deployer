@@ -16,7 +16,7 @@ Gem::Specification.new do |s|
   s.files = Dir.glob("**/*")
   s.executables = Dir["bin/*"].map { |executable| File.basename(executable) }
   #s.default_executable = ""
-  s.require_paths = ["lib"]
+  s.require_paths = ["tasks"]
 
   # Ruby version
   s.required_ruby_version = ::Gem::Requirement.new("~> 1.9")

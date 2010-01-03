@@ -1,5 +1,10 @@
-better logging
-log even if hook isn't runed
-http probe: set timeout after sending first email
-common functions: restart nginx/apache etc
-task for hooks installation
+Co potrebuju:
+- jen jednoduchej helper, nic co by se muselo instalovat na server side
+- vsechno framework-specific bundlovat v app
+
+- task na remote setup
+- kdyz pushnu, tak se:
+  - updatne kod
+  - provedou migrace
+  - restartuje app
+  - hooky v app (pro seedovani etc)
