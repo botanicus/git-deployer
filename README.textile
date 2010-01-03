@@ -8,22 +8,29 @@ This is simple and flexible deployment solution based on Git post-receive hook.
 
 h1. Usage
 
-# Run @gem install git-deployer --development@
-# Add following lines to your file with "Nake":http://github.com/botanicus/nake tasks (I'll refer this file as @tasks.rb@):
+* Run @gem install git-deployer --development@
+* Add following lines to your file with "Nake":http://github.com/botanicus/nake tasks (I'll refer this file as @tasks.rb@):
+
 <pre>
 begin
   load "git-deployer.nake"
-  Task["deployer:setup"].config[:user] = "root"
-  Task["deployer:setup"].config[:host] = "tagadab"
-  Task["deployer:setup"].config[:path] = "/var/www/deploy-test"
+  Task["deployer:setup"].config[:servers] = {
+    server1: {
+      user: "www",
+      host: "127.0.0.1",
+      repo: "/var/sources/deploy-test.git",
+      path: "/var/www/deploy-test"
+    }
+  }
 rescue LoadError
   warn "You have to install git-deployer gem if you want to deploy to remote servers!"
 end
 </pre>
-# Install hooks via @./tasks.rb deployer:install@
-# Edit @hooks/clone@ and @hooks/update@
-# Install post-receive hook and create necessary directories via @./tasks.rb deployer:install@
-# Push your changes via @git push origin master@
+
+* Install hooks via @./tasks.rb deployer:install@
+* Edit @hooks/clone@ and @hooks/update@
+* Install post-receive hook and create necessary directories via @./tasks.rb deployer:install@
+* Push your changes via @git push origin master@
 
 That's it. When you run @git push origin master@ for the first time, it should found that given branch isn't cloned yet, so it should
 
