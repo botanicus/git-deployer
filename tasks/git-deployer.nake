@@ -3,6 +3,8 @@
 # TODO: support for multiple servers
 # Task["deployer:install"][:servers][:first][:host] = "127.0.0.1"
 
+# TODO: what about a console support as capistrano has? Would be so helpful! Or at least ./tasks.rb deployer:ssh which starts ssh session for a server and cd to application path.
+
 require "nake/template"
 
 module SshMixin
