@@ -1,0 +1,9 @@
+# DESC
+
+info "Creating logs ..."
+mkdir log tmp 2> /dev/null
+
+info "Please update your database settings and press enter to continue"
+
+run "./hooks/update"
+run "./tasks.rb db:seed"

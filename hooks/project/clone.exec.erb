@@ -1,0 +1,42 @@
+<%= options[:shebang] %>
+
+# This hook run when a new branch is pushed. It's just a standard
+# executable script, feel free to use ruby, python, shell or whatever.
+
+# Make sure this script is executable, otherwise the script will be just
+# loaded from post-receive hook, which means your shebang will be ignored.
+# However this is useful when you want to use functions defined in the hook.
+# If you want to install hooks which will be source rather than just
+# executed, use ./tasks.rb deployer:install --no-executable or add
+# Task["deployer:install"].config[:executable] = false to your tasks.rb
+
+# Setup
+# If we have everything bundled in bin, we have to put bin to the beginning of the PATH
+# variable, so all commands like rake etc will be loaded from bin, if they are in there
+export PATH="bin:$PATH"
+
+# Ruby on Rails
+export RAILS_ENV="stagging"
+gem bundle --cached # this requires bundler installed on your server
+rake db:create
+exec "hooks/update"
+#rake db:seed
+
+# Rango
+export RACK_ENV="stagging"
+gem bundle --cached
+
+exec "hooks/update"
+
+# Django
+
+# Jekyll
+jekyll --pygments
+
+# Nanoc
+nanoc3 compile
+
+# If each branch means a subdomain, you can generate vhosts in this hook
+# git push origin alpha  => alpha.example.com
+# git push origin beta   => beta.example.com
+# git push origin master => example.com

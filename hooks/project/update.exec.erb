@@ -1,0 +1,6 @@
+<%= options[:shebang] %>
+
+# This hooks run after each git push. If a new branch is created, than the clone hook runs first.
+
+rake db:migrate
+./tasks.rb db:autoupgrade
