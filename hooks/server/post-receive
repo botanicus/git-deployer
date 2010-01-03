@@ -53,14 +53,14 @@ else
   git clone repo.git webs/$branch
   cd webs/$branch
   info "[$PWD] Running clone hook"
-  source "./hooks/clone" # so user can use functions defined in this hook in his clone hook
+  . "./hooks/clone" # so user can use functions defined in this hook in his clone hook
   exit
 fi
 
 # Update hook
 if [ -x "hooks/update" ] ; then
   info "Runnings project's update hook"
-  source "./hooks/update"
+  . "./hooks/update"
   exit
 else
   abort "Update hook doesn't exist or isn't executable"
