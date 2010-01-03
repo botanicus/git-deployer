@@ -1,5 +1,8 @@
 #!/usr/bin/env nake
 
+# TODO: support for multiple servers
+# Task["deployer:install"][:servers][:first][:host] = "127.0.0.1"
+
 require "nake/template"
 
 module SshMixin
@@ -9,6 +12,22 @@ module SshMixin
   
   def uri
     "%{user}@%{host}" % config
+  end
+  
+  def repo
+    if config[:repo].match(%r[^/])
+      config[:repo]
+    else
+      File.join(config[:path], config[:repo])
+    end
+  end
+  
+  def target
+    if config[:target].match(%r[^/])
+      config[:target]
+    else
+      File.join(config[:path], config[:target])
+    end
   end
 end
 
@@ -39,13 +58,21 @@ Task.new("deployer:install") do |task|
   end
 end
 
+# Task["deployer:setup"].config[:repo] = "repo.git"           # relative path
+# Task["deployer:setup"].config[:repo] = "/sources/myapp.git" # absolute path
 Task.new("deployer:setup") do |task|
   task.description = "Install Git hooks on remote server"
   task.extend(SshMixin)
+  
+  # configuration
+  task.config[:repo] = "repo.git"
+  task.config[:target] = "webs"
+
   task.define do |options|
     ssh "rm -rf #{config[:path]}" if options[:force]
     unless ssh "test -d #{config[:path]}"
-      ssh "mkdir -p #{config[:path]}/{repo.git,webs}"
+      ssh "mkdir -p #{repo}"
+      ssh "mkdir -p #{target}"
       ssh "cd #{config[:path]}/repo.git && git init --bare"
       Task["deployer:remote:copy_hook"].call(options)
       info "Run this: git remote add origin #{uri}:#{config[:path]}/repo.git"
@@ -59,10 +86,11 @@ Task.new("deployer:remote:copy_hook") do |task|
   task.description = "Copy Git hook to remote server"
   task.config = Task["deployer:setup"].config
   task.extend(SshMixin)
+
   task.define do |options|
-    if File.exist?(File.join(File.dirname($0), "hooks", "post-receive"))
+    if File.exist?(File.join("hooks", "post-receive"))
       info "Using local hook from hooks/post-receive"
-      hook = File.join(File.dirname($0), "hooks", "post-receive")
+      hook = File.join("hooks", "post-receive")
     else
       info "Generating hook from default post-receive template"
       hook = "post-receive-#{rand(1_000_000_000_000_000)}"
@@ -76,16 +104,17 @@ end
 
 # ./tasks.rb deployer:copy_hook
 # ./tasks.rb deployer:copy_hook --force
-# ./tasks.rb deployer:copy_hook --shebang
+# ./tasks.rb deployer:copy_hook --shebang="#!/bin/zsh"
 # Task["deployer:copy_hook"].config[:shebang] = "#!/bin/zsh"
 # Task["deployer:copy_hook"].config[:debug] = true
 # Task["deployer:copy_hook"].config[:branch] = "master" # if you want to deploy just given branch
 Task.new("deployer:copy_hook") do |task|
   task.description = "Copy Git hook locally, so you can edit it and at the next remote copy it will be used instead of the hook distributed with git-deployer."
+
   task.define do |path = "hooks/post-receive", options|
     template = File.join(File.dirname(__FILE__), "..", "hooks", "server", "post-receive.erb")
     if ! File.exist?(path) || options[:force]
-      context = {shebang: "#!/bin/sh", debug: true, branch: nil}.merge(config).merge(options)
+      context = {shebang: "#!/bin/sh", debug: true, branch: nil, target: "webs/$BRANCH"}.merge(config).merge(options)
       erb template, path, context
     else
       abort "File #{path} already exist. Run this task with --force option to override."
@@ -97,6 +126,7 @@ Task.new("deployer:run") do |task|
   task.description = "Run remote hook"
   task.config = Task["deployer:setup"].config
   task.extend(SshMixin)
+
   task.define do
     # STDIN for post-receive:
     # SHA1 SHA1 refs/heads/master

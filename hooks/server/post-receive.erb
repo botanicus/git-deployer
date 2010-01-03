@@ -27,6 +27,8 @@ set -- $(cat /dev/stdin)
 old=$1 && new=$2 && ref=$3
 export BRANCH=$(basename $ref)
 export DEBUG=<%= debug %>
+export TARGET="<%= target %>"
+
 <% if branch %>
 # restrict deployment just to given branch
 if [ $BRANCH != <%= branch %> ]
@@ -44,7 +46,7 @@ cd ..
 root=`pwd`
 
 # GIT_DIR is "." which should points to bare repozitory
-GIT_DIR="`pwd`/webs/$BRANCH/.git"
+GIT_DIR="$PWD/$TARGET/.git"
 
 info "Reading /etc/profile ..."
 . /etc/profile
@@ -58,7 +60,7 @@ debug "Ruby version: $(ruby --version)"
 debug "Ruby path: $(which ruby)"
 debug
 
-if [ -d "webs/$BRANCH" ] ; then
+if [ -d $TARGET ] ; then
   cd webs/$BRANCH
   info "Updating $BRANCH in `pwd` ... (from $old' to '$new')"
   git fetch

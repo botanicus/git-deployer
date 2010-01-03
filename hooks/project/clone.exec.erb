@@ -1,42 +1,53 @@
 <%= options[:shebang] %>
 
+# === Documentation === #
 # This hook run when a new branch is pushed. It's just a standard
 # executable script, feel free to use ruby, python, shell or whatever.
+
+# Just don't forget that gems you have on your local machine probably
+# aren't installed at the server, at least before you run gem bundle.
+
+# Your working directory is root of your application which was just cloned
+# here. (Probably) unlike to your local machine, basename is name of the branch,
+# not name of the application. It shouldn't matter in most cases, but sometimes
+# it does, for example in Python where you are using import myapp.something.
+# 1) Write an awful perl-ish script with sed -i / perl -i / ruby -i and just replace
+#    the name in your code. It might work, but come on, you don't want to do that.
+# 2) Your application will be as a subdirectory of the root of the repository,
+#    so you may call it whatever you want.
+# 3) Obviously the best solution is to change the post-receive script, for example:
+#    Task["deployer:copy_hook"].config[:target] = "myappname"
 
 # Make sure this script is executable, otherwise the script will be just
 # loaded from post-receive hook, which means your shebang will be ignored.
 # However this is useful when you want to use functions defined in the hook.
-# If you want to install hooks which will be source rather than just
+# If you want to install hooks which will be loaded rather than just
 # executed, use ./tasks.rb deployer:install --no-executable or add
 # Task["deployer:install"].config[:executable] = false to your tasks.rb
 
-# Setup
-# If we have everything bundled in bin, we have to put bin to the beginning of the PATH
-# variable, so all commands like rake etc will be loaded from bin, if they are in there
-export PATH="bin:$PATH"
-
 # Ruby on Rails
-export RAILS_ENV="stagging"
-gem bundle --cached # this requires bundler installed on your server
+export RAILS_ENV="stagging" # if you are deploying to more servers, you might want to setup this in your /etc/profile
+echo "Please edit config/database.yml and rerun this hook via ./tasks.rb deployer:run if you need so"
+test -f config/database.yml.sample && cp config/database.yml.sample config/database.yml
 rake db:create
 exec "hooks/update"
-#rake db:seed
 
 # Rango
-export RACK_ENV="stagging"
-gem bundle --cached
-
+export RACK_ENV="stagging" # if you are deploying to more servers, you might want to setup this in your /etc/profile
+echo "Please edit environments.rb and rerun this hook via ./tasks.rb deployer:run if you need so"
+test -f environments_sample.rb && cp environments_sample.rb environments.rb
 exec "hooks/update"
 
 # Django
+echo "Please edit settings_local.py and rerun this hook via ./tasks.rb deployer:run if you need so"
+test -f settings_local_sample.py && cp settings_local_sample.py settings_local.py
 
-# Jekyll
-jekyll --pygments
-
-# Nanoc
-nanoc3 compile
-
-# If each branch means a subdomain, you can generate vhosts in this hook
+# === Hints === #
+# If each branch means a subdomain, you can generate vhosts in this
+# hook. If you do so, then don't forget to restart your server!
 # git push origin alpha  => alpha.example.com
 # git push origin beta   => beta.example.com
 # git push origin master => example.com
+
+echo "Don't forget to edit hooks/clone\!"
+exit 1

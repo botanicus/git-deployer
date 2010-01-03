@@ -1,9 +1,55 @@
-# DESC
+# === Documentation === #
+# This is just a standard shell script, which is loaded from the
+# post-receive hook when a new branch is created.
 
-info "Creating logs ..."
-mkdir log tmp 2> /dev/null
+# Just don't forget that gems you have on your local machine probably
+# aren't installed at the server, at least before you run gem bundle.
 
-info "Please update your database settings and press enter to continue"
+# Your working directory is root of your application which was just cloned
+# here. (Probably) unlike to your local machine, basename is name of the branch,
+# not name of the application. It shouldn't matter in most cases, but sometimes
+# it does, for example in Python where you are using import myapp.something.
+# 1) Write an awful perl-ish script with sed -i / perl -i / ruby -i and just replace
+#    the name in your code. It might work, but come on, you don't want to do that.
+# 2) Your application will be as a subdirectory of the root of the repository,
+#    so you may call it whatever you want.
+# 3) Obviously the best solution is to change the post-receive script, for example:
+#    Task["deployer:copy_hook"].config[:target] = "myappname"
 
-run "./hooks/update"
-run "./tasks.rb db:seed"
+# Make sure this script isn't executable, otherwise the script will simply run,
+# so you won't have access to shell functions from the post-receive hook.
+# However this is useful if you want to run this script under another interpret.
+# If you want to install hooks which will be executed rather than just
+# loaded, use ./tasks.rb deployer:install --executable or add
+# Task["deployer:install"].config[:executable] = false to your tasks.rb
+
+# Also, post-receive hook run under /bin/sh by default, but you might want to
+# use something more advance like bash or zsh. Since these shells are compatible
+# with the original sh, it's easy, just run ./tasks.rb deployer:copy_hook --shebang="#!/bin/zsh"
+# or add Task["deployer:copy_hook"].config[:shebang] = "#!/bin/zsh" to your tasks.rb and reinstall the hooks.
+
+# Ruby on Rails
+export RAILS_ENV="stagging" # if you are deploying to more servers, you might want to setup this in your /etc/profile
+info "Please edit config/database.yml and rerun this hook via ./tasks.rb deployer:run if you need so"
+test -f config/database.yml.sample && cp config/database.yml.sample config/database.yml
+rake db:create
+. "hooks/update"
+
+# Rango
+export RACK_ENV="stagging" # if you are deploying to more servers, you might want to setup this in your /etc/profile
+info "Please edit environments.rb and rerun this hook via ./tasks.rb deployer:run if you need so"
+test -f environments_sample.rb && cp environments_sample.rb environments.rb
+. "hooks/update"
+
+# Django
+info "Please edit settings_local.py and rerun this hook via ./tasks.rb deployer:run if you need so"
+test -f settings_local_sample.py && cp settings_local_sample.py settings_local.py
+
+# === Hints === #
+# If each branch means a subdomain, you can generate vhosts in this
+# hook. If you do so, then don't forget to restart your server!
+# git push origin alpha  => alpha.example.com
+# git push origin beta   => beta.example.com
+# git push origin master => example.com
+
+abort "Don't forget to edit hooks/clone\!"

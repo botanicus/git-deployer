@@ -1,5 +1,60 @@
-run "gem bundle --cached"
-run "./tasks.rb db:autoupgrade"
+# === Documentation === #
+# This is just a standard shell script, which is loaded from the
+# post-receive hook each time a branch is updated.
 
-info "Restarting application ..."
-run "touch tmp/restart.txt"
+# Just don't forget that gems you have on your local machine probably
+# aren't installed at the server, at least before you run gem bundle.
+
+# Your working directory is root of your application which was just cloned
+# here. (Probably) unlike to your local machine, basename is name of the branch,
+# not name of the application. It shouldn't matter in most cases, but sometimes
+# it does, for example in Python where you are using import myapp.something.
+# 1) Write an awful perl-ish script with sed -i / perl -i / ruby -i and just replace
+#    the name in your code. It might work, but come on, you don't want to do that.
+# 2) Your application will be as a subdirectory of the root of the repository,
+#    so you may call it whatever you want.
+# 3) Obviously the best solution is to change the post-receive script, for example:
+#    Task["deployer:copy_hook"].config[:target] = "myappname"
+
+# Make sure this script isn't executable, otherwise the script will simply run,
+# so you won't have access to shell functions from the post-receive hook.
+# However this is useful if you want to run this script under another interpret.
+# If you want to install hooks which will be executed rather than just
+# loaded, use ./tasks.rb deployer:install --executable or add
+# Task["deployer:install"].config[:executable] = false to your tasks.rb
+
+# === Setup === #
+# If we have everything bundled in bin, we have to put bin to the beginning of the PATH
+# variable, so all commands like rake etc will be loaded from bin, if they are in there
+export PATH="bin:$PATH" # TODO: maybe you are using script directory instead of bin?
+
+# Ruby on Rails
+export RAILS_ENV="stagging" # if you are deploying to more servers, you might want to setup this in your /etc/profile
+gem bundle --cached # this requires bundler installed on your server
+rake db:migrate
+#rake db:seed
+
+# Rango
+export RACK_ENV="stagging" # if you are deploying to more servers, you might want to setup this in your /etc/profile
+gem bundle --cached
+./tasks.rb db:autoupgrade
+#./tasks.rb db:seed
+
+# Django
+# load data from fixtures
+info "Running syncdb ..."
+python "manage.py syncdb --noinput"
+
+# Jekyll
+# point your vhost to the _site directory
+jekyll --pygments
+
+# Nanoc
+# point your vhost to the output directory
+nanoc3 compile
+
+# Restart passenger application
+info "Restarting Passenger ..."
+touch tmp/restart.txt
+
+abort "Don't forget to edit hooks/update\!"

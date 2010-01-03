@@ -4,6 +4,11 @@ This is a "git-deployer":http://github.com/botanicus/git-deployer demo.
 
 h1. Usage
 
-# Edit connection details in tasks.rb
-# Ensure you have "Nake":http://github.com/botanicus/nake task manager installed
-#
+# Copy this directory out of the git-deployer repository.
+# Edit connection details in @tasks.rb@.
+# Ensure you have "Nake":http://github.com/botanicus/nake task manager installed.
+# Run @./tasks.rb deployer:setup@
+# Run @git init && git add . && git commit -a -m "Initial import"@ and then @git remote add@ with the URL of remote repository.
+# Run @git push origin master@ and see what's going on.
+
+Of course if you want to see something real, you have to point your web server to this repository, probably via vhost.
