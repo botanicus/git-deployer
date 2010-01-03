@@ -66,10 +66,10 @@ You might not want to deploy every branch you push to origin.
 
 h1. FAQ
 
-# I had typo in my hooks, so it failed during deploy, how can I rerun it?
+*Q:* _I had typo in my hooks, so it failed during deploy, how can I rerun it?_
 
-@./tasks.rb deployer:run@ with optional argument which
+*A:* @./tasks.rb deployer:run@ with optional argument which
 
-# You are using "Nake":http://github.com/botanicus/nake, but everyone's using Rake. Is there any chance that you will support Rake in future?
+*Q:* _You are using "Nake":http://github.com/botanicus/nake, but everyone's using Rake. Is there any chance that you will support Rake in future?_
 
-The trouble with Rake is that Rake doesn't support configuration and it also really suck in command-line parsing. If Rake will support at least the command line arguments in a reasonable way, I can think about it.
+*A:* The trouble with Rake is that Rake doesn't support configuration and it also really suck in command-line parsing. If Rake will support at least the command line arguments in a reasonable way, I can think about it.
