@@ -1,6 +1,7 @@
 #!/usr/bin/env nake
 
 # TODO: what about a console support as capistrano has? Would be so helpful! Or at least ./tasks.rb deployer:ssh which starts ssh session for a server and cd to application path.
+# TODO: run a command on all/given servers, like if you forget to create tmp in your clone hook
 
 require "nake/template"
 
@@ -229,7 +230,7 @@ Task.new("deployer:compile_hook") do |task|
     target = "hooks/post-receive.#{server_name}"
     if ! File.exist?(target) || options[:force]
       info "Creating #{target} from template #{source}"
-      erb source, target, {repo: server[:repo]}.merge(config).merge(options)
+      erb source, target, {repo: server[:repo], path: server[:path]}.merge(config).merge(options)
     else
       abort "File #{target} already exist. Run this task with --force option to override."
     end

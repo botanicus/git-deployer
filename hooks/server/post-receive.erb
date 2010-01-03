@@ -27,7 +27,7 @@ set -- $(cat /dev/stdin)
 old=$1 && new=$2 && ref=$3
 export BRANCH=$(basename $ref)
 export DEBUG=<%= debug %>
-export TARGET="<%= target %>"
+export TARGET="<%= File.join(path, target) %>"
 export REPO="<%= repo %>"
 
 <% if branch %>
@@ -53,6 +53,12 @@ debug "USER: $USER"
 debug "TERM: $TERM"
 debug "Ruby version: $(ruby --version)"
 debug "Ruby path: $(which ruby)"
+debug
+debug "=== Git-deployer ==="
+debug "TARGET: $TARGET"
+debug "BRANCH: $BRANCH"
+debug "REPO: $REPO"
+debug "PWD: $PWD"
 debug
 
 if [ -d $TARGET ] ; then
