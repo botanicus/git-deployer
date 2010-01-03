@@ -22,12 +22,17 @@ module SshMixin
     sh "ssh %{user}@%{host} '#{command}'" % server
   end
 
-  def servers(config, &block)
+  def servers(*names, &block)
+    config = Task["deployer:setup"].config
+
     if ! config.has_key?(:servers) || config[:servers].empty?
       abort "You have to configure servers. Read documentation online at http://github.com/botanicus/git-deployer"
     end
 
-    config[:servers].each do |name, server|
+    names = config[:servers].keys if names.empty?
+    names.each do |name|
+      server = config[:servers][name]
+
       [:user, :host, :repo, :path].each do |key|
         unless server.has_key?(key)
           abort "Server #{name} doesn't have key #{key}, you have to provide it!"
@@ -93,7 +98,7 @@ Task.new("deployer:setup") do |task|
   task.extend(SshMixin)
 
   task.define do |options|
-    servers(config) do |name, server|
+    servers do |name, server|
       if options[:force]
         ssh server, "test -d %{path} && rm -rf %{path}; test -d %{repo} && rm -rf %{repo}"
       end
@@ -129,7 +134,7 @@ Task.new("deployer:remote:copy_hook") do |task|
 
   # TODO: change gemspec to require Ruby 1.9
   task.define_singleton_method(:template) do |path|
-    path.ends_with?(".erb") ? path : compile_template(path)
+    path.end_with?(".erb") ? path : compile_template(path)
   end
 
   # Template precedence:
@@ -146,13 +151,13 @@ Task.new("deployer:remote:copy_hook") do |task|
 
   # @return [String] path to the post-receive hook which was generated
   task.define_singleton_method(:compile_template) do |name|
-    ["hooks/post-receive.#{name}.erb", "hooks/post-receive.erb"].each do |template|
+    path = ["hooks/post-receive.#{name}.erb", "hooks/post-receive.erb"].find do |template|
       if File.exist?(template)
         info "Compiling template #{template}"
-        copy_hook, args = Task["deployer:compile_hook"], template, task.original_args
-        return copy_hook.run_from_task(task.name, template, *args, options) # TODO
+        Task["deployer:compile_hook"].call(template, name, options)
       end
     end
+    path.sub(/\.erb$/, "") if path
   end
 
   task.define_singleton_method(:upload) do |server, local_path|
@@ -160,21 +165,20 @@ Task.new("deployer:remote:copy_hook") do |task|
     ssh server, "chmod +x %{repo}/hooks/post-receive"
   end
 
-  task.define do |options|
-    setup = Task["deployer:setup"].config
-    servers(setup) do |name, server|
+  task.define do |*names, options|
+    servers(*names) do |name, server|
       # generate the hook if it doesn't exist
       if local_path = self.find_template(name)
-        info "Using hook #{path}"
+        info "Using hook #{local_path}"
         self.upload(server, local_path)
       elsif local_path = self.compile_template(name)
         self.upload(server, local_path)
         sh "rm #{local_path}"
       else
         template = File.join(File.dirname(__FILE__), "..", "hooks", "server", "post-receive.erb")
-        Task["deployer:compile_hook"].run_from_task(task.name, template, *task.original_args, options)
         info "Generating hook from default post-receive template"
-        local_path = "post-receive-#{rand(1_000_000_000_000_000)}"
+        Task["deployer:compile_hook"].call([template, name], options)
+        local_path = "hooks/post-receive.#{name}"
         self.upload(server, local_path)
         sh "rm #{local_path}"
       end
@@ -205,6 +209,7 @@ end
 #                           different branch which isn't probably what you want. But if you deploy just one branch, then it's OK.
 Task.new("deployer:compile_hook") do |task|
   task.description = "Copy Git hook locally, so you can edit it and at the next remote copy it will be used instead of the hook distributed with git-deployer."
+  task.extend(SshMixin)
 
   # default configuration
   task.config[:shebang] = "#!/bin/sh"
@@ -213,11 +218,15 @@ Task.new("deployer:compile_hook") do |task|
   task.config[:branch]  = nil
   task.config[:target]  = "$BRANCH"
 
-  task.define do |source = nil, options|
-    abort "You have to specify the template you want to compile!" if source.nil?
-    abort "First argument has to be a template with .erb extension!" unless source.ends_with?(".erb")
-    target = source.sub(/\.erb$/, "")
+  # We have to generate one hook for each server configuration because we have to specify local paths
+  task.define do |source = nil, server_name = nil, options|
+    abort "[#1] You have to specify the template you want to compile!" if source.nil?
+    abort "[#2] You have to specify the the server_name!" if server_name.nil?
+    abort "First argument has to be a template with .erb extension!" unless source.end_with?(".erb")
+    server = Task["deployer:setup"].config[:servers][server_name]
+    target = "hooks/post-receive.#{server_name}"
     if ! File.exist?(target) || options[:force]
+      info "Creating #{target} from template #{source}"
       erb source, target, {repo: server[:repo]}.merge(config).merge(options)
     else
       abort "File #{target} already exist. Run this task with --force option to override."
@@ -245,10 +254,24 @@ Task.new("deployer:run") do |task|
   # STDIN for post-receive:
   # SHA1 SHA1 refs/heads/master
   task.define do
-    servers(Task["deployer:setup"].config) do |name, server|
+    servers do |name, server|
       head = `git rev-parse HEAD`
       refs = `cat .git/HEAD | awk '{ print $2 }'`
       ssh server, "cd %{path} && echo #{head} #{head} #{refs} | ./hooks/post-receive"
+    end
+  end
+end
+
+# ./tasks.rb deployer:remove
+# ./tasks.rb deployer:remove server1 server2
+Task.new("deployer:remove") do |task|
+  task.description = "Remove created directory for remote servers"
+  task.config = Task["deployer:setup"].config
+  task.extend(SshMixin)
+
+  task.define do |*names, options|
+    servers(names) do |name, server|
+      ssh "rm -rf %{path}; rm -rf %repo"
     end
   end
 end
