@@ -3,13 +3,6 @@
 # This hooks run when a new branch is pushed.
 # It's just a standard executable script, feel free to use ruby, python, shell or whatever.
 
-# Functions
-error()   { printf "\e[1;31m$*\e[0m\n"; }
-abort()   { error $*; exit 1; }
-success() { printf "\e[1;32m$*\e[0m\n"; }
-info()    { printf "\e[1;34m$*\e[0m\n"; }
-run()     { info $* ; $*; }
-
 info "Creating logs ..."
 mkdir log tmp 2> /dev/null
 
