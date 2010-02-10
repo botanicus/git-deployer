@@ -63,10 +63,12 @@ debug
 
 if [ -d $TARGET ] ; then
   cd $TARGET
+  GIT_DIR="$PWD/.git"
   info "Updating $BRANCH in `pwd` ... (from $old' to '$new')"
   git fetch
   git reset $new --hard
 else
+  GIT_DIR="$PWD/.git"
   info "Cloning $BRANCH to $(pwd)/$TARGET (HEAD: '$new') ..."
   git clone $REPO $TARGET
   cd $TARGET
