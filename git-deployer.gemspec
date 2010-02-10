@@ -1,6 +1,8 @@
 #!/usr/bin/env gem build
 # encoding: utf-8
 
+require "base64"
+
 Gem::Specification.new do |s|
   s.name = "git-deployer"
   s.version = "0.0.1"
@@ -9,11 +11,12 @@ Gem::Specification.new do |s|
   s.summary = "Easy deploy system based on Git hooks"
   s.description = "" # TODO: long description
   s.cert_chain = nil
-  s.email = ["knava.bestvinensis", "gmail.com"].join("@")
+  s.email = Base64.decode64("c3Rhc3RueUAxMDFpZGVhcy5jeg==\n")
   s.has_rdoc = false
 
   # files
-  s.files = Dir.glob("**/*") - Dir.glob("*.gem")
+  s.files = `git ls-files`.split("\n")
+
   s.require_paths = ["tasks"]
 
   # dependencies
