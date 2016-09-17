@@ -5,12 +5,12 @@ require "base64"
 
 Gem::Specification.new do |s|
   s.name = "git-deployer"
-  s.version = "0.0.2"
+  s.version = "0.0.3"
   s.authors = ["Jakub Šťastný aka Botanicus"]
   s.homepage = "http://github.com/botanicus/git-deployer"
   s.summary = "Easy deploy system based on Git hooks"
   s.description = "" # TODO: long description
-  s.cert_chain = nil
+  # s.cert_chain = nil
   s.email = Base64.decode64("c3Rhc3RueUAxMDFpZGVhcy5jeg==\n")
   s.has_rdoc = false
 

@@ -124,7 +124,7 @@ Task.new("deployer:setup") do |task|
     end
 
     # copy post-receive hooks
-    Task["deployer:remote:copy_hook"].run_from_task("deployer:setup", [], options)
+    Task["s"].run_from_task("deployer:setup", [], options)
   end
 end
 

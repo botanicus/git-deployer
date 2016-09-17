@@ -29,7 +29,7 @@ end
 
 * Install hooks via @./tasks.rb deployer:install@
 * Edit @hooks/clone@ and @hooks/update@
-* Install @post-receive@ hook and create necessary directories via @./tasks.rb deployer:install@
+* Install @post-receive@ hook and create necessary directories via @./tasks.rb deployer:setup@
 * Push your changes via @git push origin master@
 
 That's it. When you run @git push origin master@ for the first time, it should found that given branch isn't cloned yet, so it should
