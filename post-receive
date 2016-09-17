@@ -1,0 +1,82 @@
+#!/bin/zsh
+
+# POST-RECEIVE HOOK
+# ARGV: empty
+# STDIN: [OLD HEAD] [NEW HEAD] refs/heads/alpha
+
+unset GIT_DIR
+
+abort()   { printf "\e[1;31m$*\e[0m\n"; exit 1; }
+success() { printf "\e[1;32m$*\e[0m\n"; }
+info()    { printf "\e[1;34m$*\e[0m\n"; }
+debug()   { $DEBUG && printf "\e[1;33m$*\e[0m\n"; }
+run()     { info $* ; $*; }
+
+trim () {
+  echo $1 | cut -c 1-5
+}
+
+set -- $(cat /dev/stdin)
+
+old=$1 && new=$2 && ref=$3
+export BRANCH=$(basename $ref)
+export DEBUG=true
+export NAME=$(basename $PWD)
+export TARGET="/webs/101ideas.cz"
+export SOURCE=$PWD
+export REPO="/repos/101ideas.cz"
+
+if [ $BRANCH != 'master' ]; then
+  info "Branch $BRANCH isn't supposed to be deployable, finishing"
+  exit
+fi
+
+cd $(dirname $TARGET) # the target might not exist yet
+
+echo
+info "Reading /etc/environment"
+. /etc/environment
+
+debug
+debug "=== Environment ==="
+# debug "PATH: $PATH"
+debug "USER: $USER"
+debug "PWD: $PWD"
+# debug "TERM: $TERM"
+debug "Ruby: $(which ruby)"
+debug
+debug "=== Git-deployer ==="
+debug "NAME: $NAME"
+# debug "BRANCH: $BRANCH"
+debug "SOURCE: $SOURCE"
+debug "TARGET: $TARGET"
+debug
+
+if [ -d $TARGET ] ; then
+  cd $TARGET
+  info "Updating $BRANCH in `pwd` ... (from $(trim $old)' to '$(trim $new)')"
+  git fetch
+  git reset $new --hard
+  echo
+  info "Changes in this deployment:"
+  echo
+  git log --color $old..$new
+else
+  info "Cloning $BRANCH to $TARGET (HEAD: '$(trim $new)')"
+  git clone $REPO $TARGET --recursive
+
+  if [ $NAME = '101ideas.cz' ]; then
+    # Uploads.
+    mkdir -p /storage/uploads
+    ln -sf /storage/uploads /webs/101ideas.cz/static.101ideas.cz/site/
+
+    # Nginx.
+    echo "include /webs/101ideas.cz/vhost.conf;\n" > /etc/nginx/sites-enabled/101ideas.cz.conf
+
+    # Pick up vhost.conf.
+    stop nginx 2> /dev/null
+    start nginx
+  fi
+fi
+
+echo
